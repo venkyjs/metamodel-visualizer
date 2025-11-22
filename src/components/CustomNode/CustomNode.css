@@ -1,0 +1,66 @@
+.custom-node {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 2px solid var(--node-border);
+  background-color: var(--node-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: var(--node-text);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  font-size: 16px;
+  
+  /* Entrance Animation */
+  animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  transform-origin: center center;
+}
+
+@keyframes popIn {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.custom-node:hover {
+  border-color: var(--node-border-hover);
+  background-color: var(--node-hover);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px); /* Subtle lift */
+}
+
+.custom-node.loading {
+  border-color: var(--accent-color);
+}
+
+/* Spinner for loading state */
+.custom-node.loading::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  border-top-color: var(--accent-color);
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.custom-node-label {
+  pointer-events: none;
+}
