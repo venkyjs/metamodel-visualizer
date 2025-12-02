@@ -461,7 +461,14 @@ const CanvasContent: React.FC<CanvasProps> = ({ isAutoFocus }) => {
     const allNodes = [...updatedParentNodes, ...newNodes];
     const allEdges = [...edges, ...newEdges];
 
-    const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(allNodes, allEdges);
+    // Assign order to new nodes before layout
+    allNodes.forEach((node) => {
+      if (!nodeOrderRef.current.has(node.id)) {
+        nodeOrderRef.current.set(node.id, nodeOrderRef.current.size);
+      }
+    });
+
+    const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(allNodes, allEdges, nodeOrderRef.current);
 
     setNodesWithOrder(layoutedNodes);
     setEdges(layoutedEdges);
