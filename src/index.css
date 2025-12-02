@@ -1,31 +1,151 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
 :root {
-  --bg-color: #ffffff;
-  --text-color: #213547;
+  --bg-color: #f8fafc;
+  --text-color: #1e293b;
   --node-bg: #ffffff;
-  --node-border: #90caf9; /* Light Blue */
-  --node-border-hover: #42a5f5;
-  --node-text: #1565c0; /* Dark Blue */
-  --node-hover: #f5faff;
-  --line-color: #b0bec5;
-  --accent-color: #2196f3;
+  --node-border: #e2e8f0;
+  --node-border-hover: #94a3b8;
+  --node-text: #334155;
+  --node-hover: #f1f5f9;
+  --line-color: #94a3b8;
+  --accent-color: #6366f1;
+  --active-path-color: #22c55e;
+
+  /* Root node (category) colors */
+  --root-border: #f59e0b;
+  --root-border-hover: #d97706;
+  --root-bg-start: #fffbeb;
+  --root-bg-end: #fef3c7;
+  --root-badge-bg: rgba(245, 158, 11, 0.15);
+  --root-badge-text: #b45309;
+
+  /* Dataspace node colors - Emerald/Green */
+  --dataspace-border: #10b981;
+  --dataspace-border-hover: #059669;
+  --dataspace-bg-start: #ecfdf5;
+  --dataspace-bg-end: #d1fae5;
+  --dataspace-badge-bg: rgba(16, 185, 129, 0.15);
+  --dataspace-badge-text: #047857;
+
+  /* Class node colors - Blue */
+  --class-border: #3b82f6;
+  --class-border-hover: #2563eb;
+  --class-bg-start: #eff6ff;
+  --class-bg-end: #dbeafe;
+  --class-badge-bg: rgba(59, 130, 246, 0.15);
+  --class-badge-text: #1d4ed8;
+
+  /* Business Concept node colors - Pink/Magenta */
+  --concept-border: #ec4899;
+  --concept-border-hover: #db2777;
+  --concept-bg-start: #fdf2f8;
+  --concept-bg-end: #fce7f3;
+  --concept-badge-bg: rgba(236, 72, 153, 0.15);
+  --concept-badge-text: #be185d;
+
+  /* Class Details node colors - Slate/Gray */
+  --classDetails-border: #64748b;
+  --classDetails-border-hover: #475569;
+  --classDetails-bg-start: #f8fafc;
+  --classDetails-bg-end: #f1f5f9;
+  --classDetails-badge-bg: rgba(100, 116, 139, 0.15);
+  --classDetails-badge-text: #475569;
+
+  /* Dataset node colors - Cyan/Teal */
+  --dataset-border: #06b6d4;
+  --dataset-border-hover: #0891b2;
+  --dataset-bg-start: #ecfeff;
+  --dataset-bg-end: #cffafe;
+  --dataset-badge-bg: rgba(6, 182, 212, 0.15);
+  --dataset-badge-text: #0e7490;
+
+  /* Attribute node colors - Violet/Purple */
+  --attribute-border: #8b5cf6;
+  --attribute-border-hover: #7c3aed;
+  --attribute-bg-start: #f5f3ff;
+  --attribute-bg-end: #ede9fe;
+  --attribute-badge-bg: rgba(139, 92, 246, 0.15);
+  --attribute-badge-text: #6d28d9;
 }
 
 body.dark-mode {
-  --bg-color: #1a1a1a;
-  --text-color: #ffffff;
-  --node-bg: #2a2a2a;
-  --node-border: #444;
-  --node-border-hover: #666;
-  --node-text: #90caf9;
-  --node-hover: #333;
-  --line-color: #555;
-  --accent-color: #64b5f6;
+  --bg-color: #0f172a;
+  --text-color: #f1f5f9;
+  --node-bg: #1e293b;
+  --node-border: #334155;
+  --node-border-hover: #475569;
+  --node-text: #e2e8f0;
+  --node-hover: #334155;
+  --line-color: #475569;
+  --accent-color: #818cf8;
+  --active-path-color: #4ade80;
+
+  /* Root node (category) colors - Dark mode */
+  --root-border: #fbbf24;
+  --root-border-hover: #f59e0b;
+  --root-bg-start: #422006;
+  --root-bg-end: #451a03;
+  --root-badge-bg: rgba(251, 191, 36, 0.2);
+  --root-badge-text: #fcd34d;
+
+  /* Dataspace node colors - Dark mode */
+  --dataspace-border: #34d399;
+  --dataspace-border-hover: #10b981;
+  --dataspace-bg-start: #022c22;
+  --dataspace-bg-end: #064e3b;
+  --dataspace-badge-bg: rgba(52, 211, 153, 0.2);
+  --dataspace-badge-text: #6ee7b7;
+
+  /* Class node colors - Dark mode */
+  --class-border: #60a5fa;
+  --class-border-hover: #3b82f6;
+  --class-bg-start: #172554;
+  --class-bg-end: #1e3a8a;
+  --class-badge-bg: rgba(96, 165, 250, 0.2);
+  --class-badge-text: #93c5fd;
+
+  /* Business Concept node colors - Dark mode */
+  --concept-border: #f472b6;
+  --concept-border-hover: #ec4899;
+  --concept-bg-start: #500724;
+  --concept-bg-end: #831843;
+  --concept-badge-bg: rgba(244, 114, 182, 0.2);
+  --concept-badge-text: #f9a8d4;
+
+  /* Class Details node colors - Dark mode */
+  --classDetails-border: #94a3b8;
+  --classDetails-border-hover: #cbd5e1;
+  --classDetails-bg-start: #1e293b;
+  --classDetails-bg-end: #334155;
+  --classDetails-badge-bg: rgba(148, 163, 184, 0.2);
+  --classDetails-badge-text: #cbd5e1;
+
+  /* Dataset node colors - Dark mode */
+  --dataset-border: #22d3ee;
+  --dataset-border-hover: #06b6d4;
+  --dataset-bg-start: #083344;
+  --dataset-bg-end: #164e63;
+  --dataset-badge-bg: rgba(34, 211, 238, 0.2);
+  --dataset-badge-text: #67e8f9;
+
+  /* Attribute node colors - Dark mode */
+  --attribute-border: #a78bfa;
+  --attribute-border-hover: #8b5cf6;
+  --attribute-bg-start: #2e1065;
+  --attribute-bg-end: #4c1d95;
+  --attribute-badge-bg: rgba(167, 139, 250, 0.2);
+  --attribute-badge-text: #c4b5fd;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
   padding: 0;
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
   background-color: var(--bg-color);
   color: var(--text-color);
   transition: background-color 0.3s, color 0.3s;
@@ -39,6 +159,82 @@ body {
   height: 100%;
 }
 
+/* ReactFlow overrides */
 .react-flow__node {
+  border-radius: 12px;
+}
+
+.react-flow__edge-path {
+  stroke-linecap: round;
+}
+
+.react-flow__edge.active-path-edge .react-flow__edge-path {
+  stroke: var(--active-path-color);
+  filter: drop-shadow(0 0 4px var(--active-path-color));
+}
+
+.react-flow__controls {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  border: 1px solid var(--node-border);
+  background: var(--bg-color);
+}
+
+.react-flow__controls-button {
+  background: var(--bg-color);
+  border-color: var(--node-border);
+  fill: var(--text-color);
+}
+
+.react-flow__controls-button:hover {
+  background: var(--node-hover);
+}
+
+.react-flow__background {
+  background-color: var(--bg-color);
+}
+
+/* Canvas container */
+.canvas-container {
+  width: 100vw;
+  height: 100vh;
+}
+
+.canvas-container.config-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-color);
+}
+
+.loading-message {
+  font-size: 18px;
+  color: var(--text-color);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.loading-message::before {
+  content: '';
+  width: 24px;
+  height: 24px;
+  border: 3px solid var(--node-border);
+  border-top-color: var(--accent-color);
   border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* App container */
+.app-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
 }

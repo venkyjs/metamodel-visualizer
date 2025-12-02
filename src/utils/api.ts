@@ -1,17 +1,6 @@
-import type { NodeData } from '../types';
+import type { NodeData, GraphNode, ApiResponse, NodeType, GraphConfig } from '../types';
 
-// Mock Data Store
-const MOCK_DATA: Record<string, string[]> = {
-  '1': ['2', '3', '4', '5', '6'],
-  '5': ['A', 'B', 'C'],
-  'A': ['A1', 'A2'],
-  'B': ['B1', 'B2'],
-  'C': ['C1', 'C2'],
-  '2': ['2A', '2B'],
-  '3': ['3A', '3B'],
-  '4': ['4A', '4B'],
-  '6': ['6A', '6B'],
-};
+const API_BASE_URL = '/api';
 
 // Generic funnel for API calls
 export async function request<T>(
@@ -19,12 +8,10 @@ export async function request<T>(
   onError?: (error: Error) => void
 ): Promise<T | null> {
   try {
-    // Global Request Interceptor (e.g. adding auth headers would go here)
     console.log('API Request started');
     
     const result = await operation();
     
-    // Global Response Interceptor
     console.log('API Request successful');
     return result;
   } catch (error) {
@@ -34,32 +21,144 @@ export async function request<T>(
   }
 }
 
-// Mock API Call
-export const fetchChildren = async (nodeId: string): Promise<NodeData[]> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const childrenIds = MOCK_DATA[nodeId] || [];
-      // Generate random children if not in mock data to allow infinite exploration
-      const finalChildren = childrenIds.length > 0 ? childrenIds : generateRandomChildren(nodeId);
-      
-      resolve(
-        finalChildren.map((id) => ({
-          label: id,
-          parentId: nodeId,
-          isExpanded: false,
-        }))
-      );
-    }, 800); // Simulate network delay
-  });
+// Fetch graph configuration
+export const fetchConfig = async (): Promise<GraphConfig> => {
+  const response = await fetch(`${API_BASE_URL}/config`);
+  
+  if (!response.ok) {
+    throw new Error('Failed to fetch graph configuration');
+  }
+  
+  const result: ApiResponse<GraphConfig> = await response.json();
+  
+  if (!result.success) {
+    throw new Error(`API error: ${result.message}`);
+  }
+  
+  return result.data;
 };
 
-function generateRandomChildren(parentId: string): string[] {
-  // Just for demo purposes: empty for deeper levels unless explicitly defined
-  // or let's make it infinite? The user said "The details of next level... will come from an API call. Mock the API call for now."
-  // Let's keep it finite for defined keys, but return empty for others to stop expansion, 
-  // or maybe generate simple generic ones like "5-1", "5-2" if we want infinite.
-  // For now, returning empty array if not in MOCK_DATA is safer to avoid clutter unless we want to show off.
-  // Let's add a few generic ones if we click deeply.
-  if (parentId.length > 3) return []; 
-  return [`${parentId}-1`, `${parentId}-2`];
-}
+// Fetch from a dynamic endpoint (config-driven)
+export const fetchFromEndpoint = async (endpoint: string, childType: NodeType): Promise<NodeData[]> => {
+  const response = await fetch(endpoint);
+  
+  if (!response.ok) {
+    throw new Error(`Failed to fetch from ${endpoint}`);
+  }
+  
+  const result: ApiResponse<GraphNode[]> = await response.json();
+  
+  if (!result.success) {
+    throw new Error(`API error: ${result.message}`);
+  }
+  
+  return result.data.map((node) => ({
+    id: node.id,
+    label: node.name,
+    nodeType: childType,
+    description: node.description,
+    properties: node.properties,
+    metadata: node.metadata,
+    isExpanded: false,
+    isLoading: false,
+    level: 1,
+  }));
+};
+
+// Fetch nodes by type
+export const fetchNodesByType = async (type: string): Promise<NodeData[]> => {
+  const response = await fetch(`${API_BASE_URL}/${type}`);
+  
+  if (!response.ok) {
+    throw new Error(`Failed to fetch ${type}`);
+  }
+  
+  const result: ApiResponse<GraphNode[]> = await response.json();
+  
+  if (!result.success) {
+    throw new Error(`API error: ${result.message}`);
+  }
+  
+  // Transform GraphNode to NodeData
+  return result.data.map((node) => ({
+    id: node.id,
+    label: node.name,
+    nodeType: node.type,
+    description: node.description,
+    properties: node.properties,
+    metadata: node.metadata,
+    isExpanded: false,
+    isLoading: false,
+    level: 1,
+  }));
+};
+
+// Fetch datasets for a specific class
+export const fetchClassDatasets = async (classId: string): Promise<NodeData[]> => {
+  const response = await fetch(`${API_BASE_URL}/classes/${classId}/datasets`);
+  
+  if (!response.ok) {
+    throw new Error(`Failed to fetch datasets for class ${classId}`);
+  }
+  
+  const result: ApiResponse<GraphNode[]> = await response.json();
+  
+  if (!result.success) {
+    throw new Error(`API error: ${result.message}`);
+  }
+  
+  return result.data.map((node) => ({
+    id: node.id,
+    label: node.name,
+    nodeType: 'dataset' as NodeType,
+    description: node.description,
+    properties: node.properties,
+    metadata: node.metadata,
+    isExpanded: false,
+    isLoading: false,
+    level: 1,
+    classId: classId,
+  }));
+};
+
+// Fetch attributes for a specific class
+export const fetchClassAttributes = async (classId: string): Promise<NodeData[]> => {
+  const response = await fetch(`${API_BASE_URL}/classes/${classId}/attributes`);
+  
+  if (!response.ok) {
+    throw new Error(`Failed to fetch attributes for class ${classId}`);
+  }
+  
+  const result: ApiResponse<GraphNode[]> = await response.json();
+  
+  if (!result.success) {
+    throw new Error(`API error: ${result.message}`);
+  }
+  
+  return result.data.map((node) => ({
+    id: node.id,
+    label: node.name,
+    nodeType: 'attribute' as NodeType,
+    description: node.description,
+    properties: node.properties,
+    metadata: node.metadata,
+    isExpanded: false,
+    isLoading: false,
+    level: 1,
+    classId: classId,
+  }));
+};
+
+// Type mapping for API calls
+export const getApiEndpoint = (label: string): string => {
+  switch (label.toLowerCase()) {
+    case 'dataspaces':
+      return 'dataspaces';
+    case 'classes':
+      return 'classes';
+    case 'business concepts':
+      return 'businessConcepts';
+    default:
+      return label.toLowerCase();
+  }
+};

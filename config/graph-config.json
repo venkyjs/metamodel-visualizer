@@ -1,0 +1,82 @@
+{
+  "initialNodes": [
+    {
+      "id": "root-dataspaces",
+      "label": "Dataspaces",
+      "nodeType": "root"
+    },
+    {
+      "id": "root-classes",
+      "label": "Classes",
+      "nodeType": "root"
+    },
+    {
+      "id": "root-businessconcepts",
+      "label": "Business Concepts",
+      "nodeType": "root"
+    }
+  ],
+  "nodeTypeConfig": {
+    "root": {
+      "clickBehavior": "fetchByLabel",
+      "labelMapping": {
+        "Dataspaces": {
+          "endpoint": "/api/dataspaces",
+          "childType": "dataspace"
+        },
+        "Classes": {
+          "endpoint": "/api/classes",
+          "childType": "class"
+        },
+        "Business Concepts": {
+          "endpoint": "/api/businessConcepts",
+          "childType": "businessConcept"
+        }
+      }
+    },
+    "dataspace": {
+      "clickBehavior": "none"
+    },
+    "class": {
+      "clickBehavior": "staticChildren",
+      "staticChildren": [
+        {
+          "idSuffix": "datasets",
+          "label": "Datasets",
+          "nodeType": "classDetails",
+          "descriptionTemplate": "Datasets associated with {parentLabel}"
+        },
+        {
+          "idSuffix": "attributes",
+          "label": "Attributes",
+          "nodeType": "classDetails",
+          "descriptionTemplate": "Attributes defined in {parentLabel}"
+        }
+      ]
+    },
+    "businessConcept": {
+      "clickBehavior": "none"
+    },
+    "classDetails": {
+      "clickBehavior": "fetchByLabel",
+      "labelMapping": {
+        "Datasets": {
+          "endpoint": "/api/classes/{classId}/datasets",
+          "childType": "dataset"
+        },
+        "Attributes": {
+          "endpoint": "/api/classes/{classId}/attributes",
+          "childType": "attribute"
+        }
+      }
+    },
+    "dataset": {
+      "clickBehavior": "none"
+    },
+    "attribute": {
+      "clickBehavior": "none"
+    }
+  }
+}
+
+

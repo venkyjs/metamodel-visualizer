@@ -1,16 +1,20 @@
 import dagre from 'dagre';
 import { Position, type Node, type Edge } from '@xyflow/react';
 
-const dagreGraph = new dagre.graphlib.Graph();
-dagreGraph.setDefaultEdgeLabel(() => ({}));
-
-// Node size (width/height) - should match the CSS dimensions + some padding
-// CustomNode is 60px * 60px. Let's give some space.
-const NODE_WIDTH = 120;
+// Node size for rectangular nodes
+const NODE_WIDTH = 200;
 const NODE_HEIGHT = 120;
 
 export const getLayoutedElements = (nodes: Node[], edges: Edge[]) => {
-  dagreGraph.setGraph({ rankdir: 'TB' }); // Top-to-Bottom
+  const dagreGraph = new dagre.graphlib.Graph();
+  dagreGraph.setDefaultEdgeLabel(() => ({}));
+  dagreGraph.setGraph({ 
+    rankdir: 'TB',
+    nodesep: 60,
+    ranksep: 80,
+    marginx: 40,
+    marginy: 40,
+  });
 
   nodes.forEach((node) => {
     dagreGraph.setNode(node.id, { width: NODE_WIDTH, height: NODE_HEIGHT });
@@ -28,11 +32,9 @@ export const getLayoutedElements = (nodes: Node[], edges: Edge[]) => {
       ...node,
       targetPosition: Position.Top,
       sourcePosition: Position.Bottom,
-      // We are shifting the dagre node position (anchor=center center) to the top left
-      // so it matches the React Flow node anchor point (top left).
       position: {
-        x: nodeWithPosition.x - NODE_WIDTH / 2 + 30, // +30 to center the 60px node in the 120px space
-        y: nodeWithPosition.y - NODE_HEIGHT / 2 + 30,
+        x: nodeWithPosition.x - NODE_WIDTH / 2,
+        y: nodeWithPosition.y - NODE_HEIGHT / 2,
       },
     };
   });
