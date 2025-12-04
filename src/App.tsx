@@ -9,7 +9,7 @@ type ViewOption = 'everything' | 'active-path' | 'current-node' | null;
 function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isAutoFocus, setIsAutoFocus] = useState(true);
-  const [isAnimated, setIsAnimated] = useState(true);
+  const [isAnimated, setIsAnimated] = useState(false);
   const [viewDropdownOpen, setViewDropdownOpen] = useState(false);
   const [selectedView, setSelectedView] = useState<ViewOption>(() => {
     const saved = localStorage.getItem('selectedView');
