@@ -24,11 +24,12 @@ const nodeTypes = {
 
 interface CanvasProps {
   isAutoFocus: boolean;
+  isAnimated: boolean;
 }
 
 type ViewOption = 'everything' | 'active-path' | 'current-node' | null;
 
-const CanvasContent: React.FC<CanvasProps> = ({ isAutoFocus }) => {
+const CanvasContent: React.FC<CanvasProps> = ({ isAutoFocus, isAnimated }) => {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [activePath, setActivePath] = useState<string[]>([]);
@@ -37,8 +38,10 @@ const CanvasContent: React.FC<CanvasProps> = ({ isAutoFocus }) => {
   const [graphConfig, setGraphConfig] = useState<GraphConfig | null>(null);
   const [configLoading, setConfigLoading] = useState(true);
   const [currentView, setCurrentView] = useState<ViewOption>(null);
+  const [isAnimatingNodes, setIsAnimatingNodes] = useState(false);
   const lastSelectedNodeRef = useRef<Node | null>(null);
   const nodeOrderRef = useRef<Map<string, number>>(new Map());
+  const existingNodeIdsRef = useRef<Set<string>>(new Set());
   const { setCenter, fitView, fitBounds, getNodes } = useReactFlow();
 
   // Track original node order and sort nodes to maintain it
@@ -458,7 +461,27 @@ const CanvasContent: React.FC<CanvasProps> = ({ isAutoFocus }) => {
       return n;
     });
 
-    const allNodes = [...updatedParentNodes, ...newNodes];
+    // Track existing node IDs before adding new ones
+    const existingIds = new Set(nodes.map(n => n.id));
+    existingNodeIdsRef.current = existingIds;
+
+    // Determine if new nodes are relationship nodes (classDetails) or regular children
+    const newNodesWithAnimationData = newNodes.map((newNode) => {
+      const nodeData = newNode.data as unknown as NodeData;
+      const isRelationshipNode = nodeData.nodeType === 'classDetails';
+      
+      return {
+        ...newNode,
+        data: {
+          ...newNode.data,
+          isNewNode: true,
+          isRelationshipNode,
+          animateEntrance: isAnimated,
+        },
+      };
+    });
+
+    const allNodes = [...updatedParentNodes, ...newNodesWithAnimationData];
     const allEdges = [...edges, ...newEdges];
 
     // Assign order to new nodes before layout
@@ -469,6 +492,26 @@ const CanvasContent: React.FC<CanvasProps> = ({ isAutoFocus }) => {
     });
 
     const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(allNodes, allEdges, nodeOrderRef.current);
+
+    // If animation is enabled, trigger animation state
+    if (isAnimated && newNodes.length > 0) {
+      setIsAnimatingNodes(true);
+      // Reset animation state after animations complete (0.5s position + 0.3s child)
+      setTimeout(() => {
+        setIsAnimatingNodes(false);
+        // Clear animation flags from nodes
+        setNodes((currentNodes) =>
+          currentNodes.map((n) => ({
+            ...n,
+            data: {
+              ...n.data,
+              isNewNode: false,
+              animateEntrance: false,
+            },
+          }))
+        );
+      }, 850);
+    }
 
     setNodesWithOrder(layoutedNodes);
     setEdges(layoutedEdges);
@@ -508,9 +551,11 @@ const CanvasContent: React.FC<CanvasProps> = ({ isAutoFocus }) => {
     );
   }
 
+  const canvasClassName = `canvas-container${isAnimated ? ' animate-enabled' : ''}${isAnimatingNodes ? ' animating' : ''}`;
+
   return (
     <>
-      <div className="canvas-container">
+      <div className={canvasClassName}>
         <ReactFlow
           nodes={nodes}
           edges={edges}

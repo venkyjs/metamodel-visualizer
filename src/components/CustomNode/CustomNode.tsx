@@ -64,8 +64,19 @@ const CustomNode: React.FC<CustomNodeProps> = ({ data }) => {
     window.dispatchEvent(event);
   };
 
+  // Build animation classes
+  const animationClasses = [];
+  if (nodeData.animateEntrance && nodeData.isNewNode) {
+    animationClasses.push('animate-entrance');
+    if (nodeData.isRelationshipNode) {
+      animationClasses.push('relationship-node');
+    } else {
+      animationClasses.push('child-node');
+    }
+  }
+
   return (
-    <div className={`custom-node ${nodeType} ${nodeData.isLoading ? 'loading' : ''} ${nodeData.isExpanded ? 'expanded' : ''} ${isLeafNode ? 'leaf-node' : ''}`}>
+    <div className={`custom-node ${nodeType} ${nodeData.isLoading ? 'loading' : ''} ${nodeData.isExpanded ? 'expanded' : ''} ${isLeafNode ? 'leaf-node' : ''} ${animationClasses.join(' ')}`}>
       <Handle type="target" position={Position.Top} className="node-handle" />
       <Handle type="source" position={Position.Bottom} className="node-handle" />
       

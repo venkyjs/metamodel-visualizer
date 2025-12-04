@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ReactFlowProvider } from '@xyflow/react';
-import { Moon, Sun, Target, Eye, ChevronDown, Check } from 'lucide-react';
+import { Moon, Sun, Target, Eye, ChevronDown, Check, Sparkles } from 'lucide-react';
 import CanvasContent from './components/Canvas/Canvas';
 import './App.css';
 
@@ -9,6 +9,7 @@ type ViewOption = 'everything' | 'active-path' | 'current-node' | null;
 function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isAutoFocus, setIsAutoFocus] = useState(true);
+  const [isAnimated, setIsAnimated] = useState(true);
   const [viewDropdownOpen, setViewDropdownOpen] = useState(false);
   const [selectedView, setSelectedView] = useState<ViewOption>(() => {
     const saved = localStorage.getItem('selectedView');
@@ -85,6 +86,19 @@ function App() {
             <span className="slider"></span>
           </label>
         </div>
+
+        <div className="control-item" title="Toggle Animations">
+          <Sparkles size={20} />
+          <span>Animate</span>
+          <label className="switch">
+            <input 
+              type="checkbox" 
+              checked={isAnimated} 
+              onChange={(e) => setIsAnimated(e.target.checked)} 
+            />
+            <span className="slider"></span>
+          </label>
+        </div>
         
         <div className="control-item" onClick={() => setIsDarkMode(!isDarkMode)} title="Toggle Theme">
           {isDarkMode ? <Moon size={20} /> : <Sun size={20} />}
@@ -131,7 +145,7 @@ function App() {
       </div>
 
       <ReactFlowProvider>
-        <CanvasContent isAutoFocus={isAutoFocus} />
+        <CanvasContent isAutoFocus={isAutoFocus} isAnimated={isAnimated} />
       </ReactFlowProvider>
     </div>
   );

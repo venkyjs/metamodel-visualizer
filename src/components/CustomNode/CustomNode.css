@@ -15,10 +15,54 @@
   transform-origin: center center;
 }
 
+/* Animated entrance for relationship nodes - appears after position animation (0.5s delay) */
+.custom-node.animate-entrance.relationship-node {
+  opacity: 0;
+  animation: relationshipNodeEnter 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  animation-delay: 0.5s;
+}
+
+/* Animated entrance for child nodes - appears after relationship nodes (0.5s + 0.3s delay) */
+.custom-node.animate-entrance.child-node {
+  opacity: 0;
+  animation: childNodeEnter 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  animation-delay: 0.8s;
+}
+
 @keyframes slideIn {
   0% {
     transform: scale(0.8) translateY(-20px);
     opacity: 0;
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes relationshipNodeEnter {
+  0% {
+    transform: scale(0.6) translateY(-30px);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.05) translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes childNodeEnter {
+  0% {
+    transform: scale(0.6) translateY(-30px);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.05) translateY(0);
+    opacity: 1;
   }
   100% {
     transform: scale(1) translateY(0);

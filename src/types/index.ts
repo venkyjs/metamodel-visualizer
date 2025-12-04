@@ -31,6 +31,10 @@ export interface NodeData extends Record<string, unknown> {
   parentId?: string | null;
   level?: number;
   classId?: string; // Used by classDetails nodes to identify the parent class
+  // Animation properties
+  isNewNode?: boolean;
+  isRelationshipNode?: boolean;
+  animateEntrance?: boolean;
 }
 
 export interface ApiResponse<T> {

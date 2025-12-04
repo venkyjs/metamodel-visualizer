@@ -200,6 +200,11 @@ body {
   height: 100vh;
 }
 
+/* Node position animation when animate is enabled and animating */
+.canvas-container.animate-enabled.animating .react-flow__node {
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 .canvas-container.config-loading {
   display: flex;
   align-items: center;
