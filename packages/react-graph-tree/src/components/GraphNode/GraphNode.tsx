@@ -1,11 +1,10 @@
-import React, { memo } from 'react';
-import { Handle, Position, type NodeProps, type Node } from '@xyflow/react';
-import type { InternalNodeData, NodeRendererProps } from '../../types';
+import React, { memo, useContext } from 'react';
+import { Handle, Position, type NodeProps } from '@xyflow/react';
+import type { GraphTreeNode, NodeRendererProps } from '../../types';
+import { NodeRendererContext } from '../../GraphTree';
 import './GraphNode.css';
 
-interface GraphNodeProps extends NodeProps<Node> {
-  customRenderer?: React.ComponentType<NodeRendererProps>;
-}
+type GraphNodeProps = NodeProps<GraphTreeNode>;
 
 const DefaultNodeContent: React.FC<NodeRendererProps> = ({ data }) => {
   return (
@@ -25,9 +24,9 @@ const DefaultNodeContent: React.FC<NodeRendererProps> = ({ data }) => {
   );
 };
 
-const GraphNode: React.FC<GraphNodeProps> = ({ data, ...props }) => {
-  const nodeData = data as unknown as InternalNodeData;
-  const CustomRenderer = (props as unknown as { customRenderer?: React.ComponentType<NodeRendererProps> }).customRenderer;
+const GraphNode: React.FC<GraphNodeProps> = ({ data }) => {
+  const nodeData = data;
+  const CustomRenderer = useContext(NodeRendererContext);
 
   // Build animation classes
   const animationClasses = [];

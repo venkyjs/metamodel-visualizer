@@ -6,16 +6,27 @@ const NODE_WIDTH = 200;
 const NODE_HEIGHT = 120;
 const NODE_SEPARATION = 60;
 
-// Helper to get all descendants of a node
+// Helper to get all descendants of a node using iterative approach for stack safety
 const getDescendants = (nodeId: string, edges: Edge[], nodeMap: Map<string, Node>): Node[] => {
   const descendants: Node[] = [];
-  const childEdges = edges.filter(e => e.source === nodeId);
+  const stack: string[] = [nodeId];
+  const visited = new Set<string>();
   
-  for (const edge of childEdges) {
-    const childNode = nodeMap.get(edge.target);
-    if (childNode) {
-      descendants.push(childNode);
-      descendants.push(...getDescendants(edge.target, edges, nodeMap));
+  while (stack.length > 0) {
+    const currentId = stack.pop()!;
+    
+    // Skip if already visited (prevents infinite loops in case of cycles)
+    if (visited.has(currentId)) continue;
+    visited.add(currentId);
+    
+    const childEdges = edges.filter(e => e.source === currentId);
+    
+    for (const edge of childEdges) {
+      const childNode = nodeMap.get(edge.target);
+      if (childNode && !visited.has(edge.target)) {
+        descendants.push(childNode);
+        stack.push(edge.target);
+      }
     }
   }
   

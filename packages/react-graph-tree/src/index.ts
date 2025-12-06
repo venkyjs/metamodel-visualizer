@@ -6,6 +6,7 @@ export type {
   GraphTreeProps,
   GraphTreeHandle,
   GraphTreeNodeData,
+  GraphTreeNode,
   InternalNodeData,
   InitialNode,
   ChildNode,
@@ -13,6 +14,7 @@ export type {
   ControlCenterConfig,
   ThemeConfig,
   NodeRendererProps,
+  GraphTreeErrorContext,
 } from './types';
 
 // Utilities (exposed for advanced usage)

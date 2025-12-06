@@ -1,3 +1,4 @@
+import type React from 'react';
 import type { Node, Edge } from '@xyflow/react';
 
 /**
@@ -26,6 +27,11 @@ export interface InternalNodeData extends GraphTreeNodeData {
   isNewNode?: boolean;
   animateEntrance?: boolean;
 }
+
+/**
+ * Properly typed node for the graph tree with InternalNodeData
+ */
+export type GraphTreeNode = Node<InternalNodeData, 'custom'>;
 
 /**
  * Initial node configuration
@@ -88,6 +94,16 @@ export interface NodeRendererProps {
 }
 
 /**
+ * Error context provided to the onError callback
+ */
+export interface GraphTreeErrorContext {
+  /** ID of the node that caused the error */
+  nodeId: string;
+  /** Action being performed when error occurred */
+  action: 'expand';
+}
+
+/**
  * Main GraphTree component props
  */
 export interface GraphTreeProps {
@@ -104,6 +120,12 @@ export interface GraphTreeProps {
    * Callback when a node is clicked (for any additional handling)
    */
   onNodeClick?: (node: GraphTreeNodeData) => void;
+  
+  /**
+   * Callback when an error occurs during async operations
+   * Allows host applications to handle errors (toast, logging, telemetry)
+   */
+  onError?: (error: Error, context: GraphTreeErrorContext) => void;
   
   /**
    * Control center configuration
