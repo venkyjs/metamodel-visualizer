@@ -1,0 +1,171 @@
+/* MoreNode uses the same base styles as graph-tree-node */
+/* Only additional styles specific to the "more" functionality */
+
+.graph-tree-more-node {
+  /* Override overflow to allow dropdown to show */
+  overflow: visible;
+}
+
+/* Make the entire content clickable */
+.graph-tree-more-clickable {
+  cursor: pointer;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.graph-tree-more-clickable:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.graph-tree-more-clickable:focus {
+  outline: 2px solid var(--graph-tree-accent, #6366f1);
+  outline-offset: -2px;
+}
+
+/* Dropdown trigger in header */
+.graph-tree-more-dropdown-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--graph-tree-accent, #6366f1);
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.graph-tree-more-clickable:hover .graph-tree-more-dropdown-trigger {
+  background: var(--graph-tree-accent-hover, #4f46e5);
+  transform: scale(1.02);
+}
+
+.graph-tree-more-dropdown-count {
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.graph-tree-more-dropdown-chevron {
+  transition: transform 0.2s ease;
+}
+
+.graph-tree-more-dropdown-trigger.open .graph-tree-more-dropdown-chevron {
+  transform: rotate(180deg);
+}
+
+/* Portal container for dropdown */
+.graph-tree-more-dropdown-portal {
+  pointer-events: auto;
+}
+
+/* Dropdown menu - rendered via portal */
+.graph-tree-more-dropdown {
+  min-width: 200px;
+  max-width: 280px;
+  max-height: 280px;
+  background: var(--graph-tree-node-bg, #ffffff);
+  border: 1px solid var(--graph-tree-node-border, #e2e8f0);
+  border-radius: 10px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  animation: moreDropdownSlideIn 0.2s ease;
+}
+
+@keyframes moreDropdownSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.graph-tree-more-dropdown-header {
+  padding: 10px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--graph-tree-text, #1e293b);
+  opacity: 0.6;
+  background: var(--graph-tree-bg, #f8fafc);
+  border-bottom: 1px solid var(--graph-tree-node-border, #e2e8f0);
+}
+
+.graph-tree-more-dropdown-list {
+  overflow-y: auto;
+  max-height: 220px;
+}
+
+.graph-tree-more-dropdown-item {
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  border: none;
+  border-bottom: 1px solid var(--graph-tree-node-border, #e2e8f0);
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+}
+
+.graph-tree-more-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.graph-tree-more-dropdown-item:hover {
+  background: var(--graph-tree-accent, #6366f1);
+}
+
+.graph-tree-more-dropdown-item:hover .graph-tree-more-dropdown-item-label {
+  color: #ffffff;
+}
+
+.graph-tree-more-dropdown-item-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--graph-tree-text, #1e293b);
+  word-break: break-word;
+  transition: color 0.15s ease;
+}
+
+/* Dark mode styles */
+.graph-tree-dark .graph-tree-more-dropdown {
+  background: var(--graph-tree-node-bg, #1e293b);
+  border-color: var(--graph-tree-node-border, #334155);
+}
+
+.graph-tree-dark .graph-tree-more-dropdown-header {
+  background: var(--graph-tree-bg, #0f172a);
+  border-color: var(--graph-tree-node-border, #334155);
+}
+
+.graph-tree-dark .graph-tree-more-dropdown-item {
+  border-color: var(--graph-tree-node-border, #334155);
+}
+
+/* Scrollbar styles for dropdown */
+.graph-tree-more-dropdown-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.graph-tree-more-dropdown-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.graph-tree-more-dropdown-list::-webkit-scrollbar-thumb {
+  background: var(--graph-tree-node-border, #e2e8f0);
+  border-radius: 3px;
+}
+
+.graph-tree-more-dropdown-list::-webkit-scrollbar-thumb:hover {
+  background: var(--graph-tree-accent, #6366f1);
+}

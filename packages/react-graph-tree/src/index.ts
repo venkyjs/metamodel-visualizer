@@ -15,6 +15,7 @@ export type {
   ThemeConfig,
   NodeRendererProps,
   GraphTreeErrorContext,
+  MoreNodeData,
 } from './types';
 
 // Utilities (exposed for advanced usage)

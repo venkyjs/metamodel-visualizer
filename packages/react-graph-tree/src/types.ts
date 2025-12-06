@@ -104,6 +104,15 @@ export interface GraphTreeErrorContext {
 }
 
 /**
+ * Data for "n more" node that shows overflow items
+ */
+export interface MoreNodeData extends InternalNodeData {
+  isMoreNode: true;
+  hiddenNodes: ChildNode[];
+  originalParentId: string;
+}
+
+/**
  * Main GraphTree component props
  */
 export interface GraphTreeProps {
@@ -161,6 +170,14 @@ export interface GraphTreeProps {
    * Maximum zoom level
    */
   maxZoom?: number;
+  
+  /**
+   * Maximum number of visible children per node expansion.
+   * When there are more children, a "n more" node with a dropdown will be shown.
+   * Set to 0 or undefined to show all children.
+   * @default 5
+   */
+  maxVisibleChildren?: number;
 }
 
 /**

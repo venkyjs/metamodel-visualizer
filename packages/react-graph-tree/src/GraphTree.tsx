@@ -16,6 +16,8 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import GraphNode from './components/GraphNode/GraphNode';
+import MoreNode, { MoreNodeContext } from './components/MoreNode/MoreNode';
+import './components/MoreNode/MoreNode.css';
 import ControlCenter from './components/ControlCenter/ControlCenter';
 import { getLayoutedElements } from './utils/layout';
 import type { 
@@ -26,6 +28,8 @@ import type {
   GraphTreeNodeData,
   NodeRendererProps,
   GraphTreeNode,
+  ChildNode,
+  MoreNodeData,
 } from './types';
 import './styles/index.css';
 
@@ -47,6 +51,9 @@ interface GraphTreeContentProps extends GraphTreeProps {
   innerRef: React.Ref<GraphTreeHandle>;
 }
 
+// Default max visible children before showing "n more" node
+const DEFAULT_MAX_VISIBLE_CHILDREN = 5;
+
 const GraphTreeContent: React.FC<GraphTreeContentProps> = ({ 
   initialNodes: initialNodesProp,
   onNodeExpand,
@@ -59,6 +66,7 @@ const GraphTreeContent: React.FC<GraphTreeContentProps> = ({
   showBackground = true,
   minZoom = 0.1,
   maxZoom = 4,
+  maxVisibleChildren = DEFAULT_MAX_VISIBLE_CHILDREN,
   innerRef,
 }) => {
   const [nodes, setNodes] = useNodesState<GraphTreeNode>([]);
@@ -91,6 +99,7 @@ const GraphTreeContent: React.FC<GraphTreeContentProps> = ({
   // Create stable node types - renderer is passed via Context to avoid recreating component on every render
   const nodeTypes = useMemo(() => ({
     custom: GraphNode,
+    more: MoreNode,
   }), []);
 
   // Track original node order and sort nodes to maintain it
@@ -128,6 +137,80 @@ const GraphTreeContent: React.FC<GraphTreeContentProps> = ({
     });
   }, [setNodes]);
 
+  // Helper to process children and create "n more" node when needed
+  const processChildrenWithLimit = useCallback((
+    childNodes: ChildNode[],
+    parentId: string,
+    parentLevel: number
+  ): { visibleNodes: Node[], hiddenNodes: ChildNode[], moreNode: Node | null } => {
+    // If maxVisibleChildren is 0 or undefined, or children fit within limit, return all
+    if (!maxVisibleChildren || maxVisibleChildren <= 0 || childNodes.length <= maxVisibleChildren) {
+      const visibleNodes: Node[] = childNodes.map((child) => ({
+        id: child.id,
+        type: 'custom',
+        position: { x: 0, y: 0 },
+        data: {
+          id: child.id,
+          label: child.label,
+          type: child.type,
+          description: child.description,
+          parentId: parentId,
+          level: parentLevel + 1,
+          isExpanded: false,
+          isLoading: false,
+          isNewNode: true,
+          animateEntrance: isAnimated,
+        } as InternalNodeData,
+      }));
+      return { visibleNodes, hiddenNodes: [], moreNode: null };
+    }
+
+    // Show (maxVisibleChildren - 1) nodes + 1 "n more" node
+    const visibleCount = maxVisibleChildren - 1;
+    const visibleChildren = childNodes.slice(0, visibleCount);
+    const hiddenChildren = childNodes.slice(visibleCount);
+
+    const visibleNodes: Node[] = visibleChildren.map((child) => ({
+      id: child.id,
+      type: 'custom',
+      position: { x: 0, y: 0 },
+      data: {
+        id: child.id,
+        label: child.label,
+        type: child.type,
+        description: child.description,
+        parentId: parentId,
+        level: parentLevel + 1,
+        isExpanded: false,
+        isLoading: false,
+        isNewNode: true,
+        animateEntrance: isAnimated,
+      } as InternalNodeData,
+    }));
+
+    // Create the "n more" node
+    const moreNodeId = `${parentId}-more`;
+    const moreNode: Node = {
+      id: moreNodeId,
+      type: 'more',
+      position: { x: 0, y: 0 },
+      data: {
+        id: moreNodeId,
+        label: `${hiddenChildren.length} more`,
+        type: 'more',
+        parentId: parentId,
+        level: parentLevel + 1,
+        isExpanded: false,
+        isLoading: false,
+        isMoreNode: true,
+        hiddenNodes: hiddenChildren,
+        originalParentId: parentId,
+      } as MoreNodeData,
+    };
+
+    return { visibleNodes, hiddenNodes: hiddenChildren, moreNode };
+  }, [maxVisibleChildren, isAnimated]);
+
   // Initialize nodes from props - use JSON comparison to avoid resetting on inline array reference changes
   useEffect(() => {
     const serialized = JSON.stringify(initialNodesProp);
@@ -151,9 +234,9 @@ const GraphTreeContent: React.FC<GraphTreeContentProps> = ({
       nodeIds.add(node.id);
     }
     
-    const initialFlowNodes: Node[] = initialNodesProp.map((nodeConfig, index) => ({
+    const initialFlowNodes: GraphTreeNode[] = initialNodesProp.map((nodeConfig, index) => ({
       id: nodeConfig.id,
-      type: 'custom',
+      type: 'custom' as const,
       position: { x: index * 250, y: 0 },
       data: {
         id: nodeConfig.id,
@@ -295,8 +378,285 @@ const GraphTreeContent: React.FC<GraphTreeContentProps> = ({
     return path;
   }, []);
 
+  // Handle selection from "n more" dropdown
+  const handleSelectHiddenNode = useCallback(async (
+    parentNodeId: string,
+    selectedNode: ChildNode,
+    remainingHiddenNodes: ChildNode[]
+  ) => {
+    // Find the parent node and the "more" node
+    const currentNodes = nodesRef.current;
+    const currentEdges = edgesRef.current;
+    const moreNodeId = `${parentNodeId}-more`;
+    const parentNode = currentNodes.find(n => n.id === parentNodeId);
+    
+    if (!parentNode) return;
+
+    // Create the new visible node
+    const newNode: Node = {
+      id: selectedNode.id,
+      type: 'custom',
+      position: { x: 0, y: 0 },
+      data: {
+        id: selectedNode.id,
+        label: selectedNode.label,
+        type: selectedNode.type,
+        description: selectedNode.description,
+        parentId: parentNodeId,
+        level: (parentNode.data.level || 0) + 1,
+        isExpanded: false,
+        isLoading: false,
+        isNewNode: true,
+        animateEntrance: isAnimated,
+      } as InternalNodeData,
+    };
+
+    // Create edge for the new node
+    const newEdge: Edge = {
+      id: `${parentNodeId}-${selectedNode.id}`,
+      source: parentNodeId,
+      target: selectedNode.id,
+      style: { stroke: 'var(--graph-tree-line, #94a3b8)', strokeWidth: 3 },
+      animated: true,
+      markerEnd: { type: MarkerType.ArrowClosed, color: 'var(--graph-tree-line, #94a3b8)' },
+    };
+
+    let updatedNodes: GraphTreeNode[];
+    let updatedEdges: Edge[];
+
+    if (remainingHiddenNodes.length === 0) {
+      // No more hidden nodes - remove the "more" node
+      updatedNodes = currentNodes.filter(n => n.id !== moreNodeId);
+      updatedEdges = currentEdges.filter(e => e.target !== moreNodeId);
+      updatedNodes = [...updatedNodes, newNode as GraphTreeNode];
+      updatedEdges = [...updatedEdges, newEdge];
+    } else {
+      // Update the "more" node with remaining hidden nodes
+      updatedNodes = currentNodes.map(n => {
+        if (n.id === moreNodeId) {
+          return {
+            ...n,
+            data: {
+              ...n.data,
+              label: `${remainingHiddenNodes.length} more`,
+              hiddenNodes: remainingHiddenNodes,
+            } as MoreNodeData,
+          };
+        }
+        return n;
+      });
+      updatedNodes = [...updatedNodes, newNode as GraphTreeNode];
+      updatedEdges = [...currentEdges, newEdge];
+    }
+
+    // Assign order to new node
+    if (!nodeOrderRef.current.has(newNode.id)) {
+      nodeOrderRef.current.set(newNode.id, nodeOrderRef.current.size);
+    }
+
+    // Apply layout
+    const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(
+      updatedNodes,
+      updatedEdges,
+      nodeOrderRef.current
+    );
+    const typedLayoutedNodes = layoutedNodes as GraphTreeNode[];
+
+    // Trigger animation if enabled
+    if (isAnimated) {
+      setIsAnimatingNodes(true);
+      setTimeout(() => {
+        setIsAnimatingNodes(false);
+        setNodes((currentNodes) =>
+          currentNodes.map((n) => ({
+            ...n,
+            data: {
+              ...n.data,
+              isNewNode: false,
+              animateEntrance: false,
+            },
+          }))
+        );
+      }, ANIMATION_COMPLETE_DELAY);
+    }
+
+    setNodesWithOrder(typedLayoutedNodes);
+    setEdges(layoutedEdges);
+
+    // Now expand the selected node if it has an onNodeExpand handler
+    if (onNodeExpand) {
+      // Find the newly added node in the layouted nodes
+      const addedNode = typedLayoutedNodes.find(n => n.id === selectedNode.id);
+      if (addedNode) {
+        lastSelectedNodeRef.current = addedNode;
+        
+        // Update path to show the new node
+        const pathToNode = findPathToNode(selectedNode.id, typedLayoutedNodes);
+        setActivePath(pathToNode);
+
+        if (currentView) {
+          setTimeout(() => applyView(currentView, pathToNode, addedNode), LAYOUT_SETTLE_DELAY);
+        } else if (isAutoFocus) {
+          setTimeout(() => {
+            setCenter(addedNode.position.x + NODE_CENTER_OFFSET_X, addedNode.position.y + NODE_CENTER_OFFSET_Y, { zoom: DEFAULT_ZOOM, duration: ANIMATION_DURATION });
+          }, LAYOUT_SETTLE_DELAY);
+        }
+
+        // Trigger expansion for the selected node
+        setNodesWithOrder((nds) =>
+          nds.map((n) => {
+            if (n.id === selectedNode.id) {
+              return { ...n, data: { ...n.data, isLoading: true } };
+            }
+            return n;
+          })
+        );
+
+        try {
+          const publicNodeData: GraphTreeNodeData = {
+            id: selectedNode.id,
+            label: selectedNode.label,
+            type: selectedNode.type,
+            description: selectedNode.description,
+          };
+
+          const childNodes = await onNodeExpand(publicNodeData);
+
+          if (!childNodes || childNodes.length === 0) {
+            // Mark as expanded leaf
+            setNodesWithOrder((nds) =>
+              nds.map((n) => {
+                if (n.id === selectedNode.id) {
+                  return { ...n, data: { ...n.data, isLoading: false, isExpanded: true } };
+                }
+                return n;
+              })
+            );
+            return;
+          }
+
+          // Process and add child nodes
+          const { visibleNodes, moreNode: childMoreNode } = processChildrenWithLimit(
+            childNodes,
+            selectedNode.id,
+            (parentNode.data.level || 0) + 1
+          );
+
+          const newChildNodes: GraphTreeNode[] = (childMoreNode ? [...visibleNodes, childMoreNode] : visibleNodes) as GraphTreeNode[];
+          const newChildEdges: Edge[] = newChildNodes.map((childNode) => ({
+            id: `${selectedNode.id}-${childNode.id}`,
+            source: selectedNode.id,
+            target: childNode.id,
+            style: { stroke: 'var(--graph-tree-line, #94a3b8)', strokeWidth: 3 },
+            animated: true,
+            markerEnd: { type: MarkerType.ArrowClosed, color: 'var(--graph-tree-line, #94a3b8)' },
+          }));
+
+          // Get latest state after async
+          const latestNodes = nodesRef.current;
+          const latestEdges = edgesRef.current;
+
+          const updatedSelectedNode = latestNodes.map((n) => {
+            if (n.id === selectedNode.id) {
+              return { ...n, data: { ...n.data, isLoading: false, isExpanded: true } };
+            }
+            return n;
+          });
+
+          const allNodesWithChildren: GraphTreeNode[] = [...updatedSelectedNode, ...newChildNodes];
+          const allEdgesWithChildren = [...latestEdges, ...newChildEdges];
+
+          // Assign order to new child nodes
+          allNodesWithChildren.forEach((n) => {
+            if (!nodeOrderRef.current.has(n.id)) {
+              nodeOrderRef.current.set(n.id, nodeOrderRef.current.size);
+            }
+          });
+
+          const { nodes: finalLayoutedNodes, edges: finalLayoutedEdges } = getLayoutedElements(
+            allNodesWithChildren,
+            allEdgesWithChildren,
+            nodeOrderRef.current
+          );
+          const typedFinalLayoutedNodes = finalLayoutedNodes as GraphTreeNode[];
+
+          // Trigger animation for children
+          if (isAnimated && newChildNodes.length > 0) {
+            setIsAnimatingNodes(true);
+            setTimeout(() => {
+              setIsAnimatingNodes(false);
+              setNodes((currentNodes) =>
+                currentNodes.map((n) => ({
+                  ...n,
+                  data: {
+                    ...n.data,
+                    isNewNode: false,
+                    animateEntrance: false,
+                  },
+                }))
+              );
+            }, ANIMATION_COMPLETE_DELAY);
+          }
+
+          setNodesWithOrder(typedFinalLayoutedNodes);
+          setEdges(finalLayoutedEdges);
+
+          const finalUpdatedNode = typedFinalLayoutedNodes.find(n => n.id === selectedNode.id);
+          if (finalUpdatedNode) {
+            lastSelectedNodeRef.current = finalUpdatedNode;
+          }
+
+          const finalPath = findPathToNode(selectedNode.id, typedFinalLayoutedNodes);
+          setActivePath(finalPath);
+
+          if (currentView) {
+            setTimeout(() => applyView(currentView, finalPath, finalUpdatedNode || addedNode), LAYOUT_SETTLE_DELAY);
+          } else if (isAutoFocus && finalUpdatedNode) {
+            setTimeout(() => {
+              setCenter(finalUpdatedNode.position.x + NODE_CENTER_OFFSET_X, finalUpdatedNode.position.y + NODE_CENTER_OFFSET_Y, { zoom: DEFAULT_ZOOM, duration: ANIMATION_DURATION });
+            }, LAYOUT_SETTLE_DELAY);
+          }
+        } catch (error) {
+          // Reset loading state on error
+          setNodesWithOrder((nds) =>
+            nds.map((n) => {
+              if (n.id === selectedNode.id) {
+                return { ...n, data: { ...n.data, isLoading: false } };
+              }
+              return n;
+            })
+          );
+          if (onError) {
+            onError(
+              error instanceof Error ? error : new Error(String(error)),
+              { nodeId: selectedNode.id, action: 'expand' }
+            );
+          }
+        }
+      }
+    }
+  }, [
+    isAnimated,
+    isAutoFocus,
+    currentView,
+    onNodeExpand,
+    onError,
+    setCenter,
+    setNodesWithOrder,
+    setEdges,
+    setNodes,
+    findPathToNode,
+    applyView,
+    processChildrenWithLimit,
+  ]);
+
   // Handle node click
   const handleNodeClick: NodeMouseHandler<GraphTreeNode> = useCallback(async (_event, node) => {
+    // Skip processing for "more" nodes - they handle their own clicks internally
+    if ((node.data as { isMoreNode?: boolean }).isMoreNode) {
+      return;
+    }
+    
     lastSelectedNodeRef.current = node;
 
     const nodeData = node.data;
@@ -380,29 +740,19 @@ const GraphTreeContent: React.FC<GraphTreeContentProps> = ({
         return;
       }
 
-      // Create new nodes from children
-      const newNodes: Node[] = childNodes.map((child) => ({
-        id: child.id,
-        type: 'custom',
-        position: { x: 0, y: 0 },
-        data: {
-          id: child.id,
-          label: child.label,
-          type: child.type,
-          description: child.description,
-          parentId: node.id,
-          level: (nodeData.level || 0) + 1,
-          isExpanded: false,
-          isLoading: false,
-          isNewNode: true,
-          animateEntrance: isAnimated,
-        } as InternalNodeData,
-      }));
+      // Create new nodes from children (with truncation if needed)
+      const { visibleNodes, moreNode } = processChildrenWithLimit(
+        childNodes,
+        node.id,
+        nodeData.level || 0
+      );
 
-      const newEdges: Edge[] = childNodes.map((child) => ({
-        id: `${node.id}-${child.id}`,
+      const newNodes: GraphTreeNode[] = (moreNode ? [...visibleNodes, moreNode] : visibleNodes) as GraphTreeNode[];
+
+      const newEdges: Edge[] = newNodes.map((childNode) => ({
+        id: `${node.id}-${childNode.id}`,
         source: node.id,
-        target: child.id,
+        target: childNode.id,
         style: { stroke: 'var(--graph-tree-line, #94a3b8)', strokeWidth: 3 },
         animated: true,
         markerEnd: { type: MarkerType.ArrowClosed, color: 'var(--graph-tree-line, #94a3b8)' },
@@ -419,7 +769,7 @@ const GraphTreeContent: React.FC<GraphTreeContentProps> = ({
         return n;
       });
 
-      const allNodes = [...updatedParentNodes, ...newNodes];
+      const allNodes: GraphTreeNode[] = [...updatedParentNodes, ...newNodes];
       const allEdges = [...currentEdges, ...newEdges];
 
       // Assign order to new nodes
@@ -434,6 +784,7 @@ const GraphTreeContent: React.FC<GraphTreeContentProps> = ({
         allEdges, 
         nodeOrderRef.current
       );
+      const typedLayoutedNodes = layoutedNodes as GraphTreeNode[];
 
       // Trigger animation if enabled
       if (isAnimated && newNodes.length > 0) {
@@ -453,13 +804,13 @@ const GraphTreeContent: React.FC<GraphTreeContentProps> = ({
         }, ANIMATION_COMPLETE_DELAY);
       }
 
-      setNodesWithOrder(layoutedNodes);
+      setNodesWithOrder(typedLayoutedNodes);
       setEdges(layoutedEdges);
       
       const pathToNode = findPathToNode(node.id, allNodes);
       setActivePath(pathToNode);
 
-      const updatedNode = layoutedNodes.find(n => n.id === node.id);
+      const updatedNode = typedLayoutedNodes.find(n => n.id === node.id);
       if (updatedNode) {
         lastSelectedNodeRef.current = updatedNode;
       }
@@ -503,7 +854,8 @@ const GraphTreeContent: React.FC<GraphTreeContentProps> = ({
     setEdges, 
     setNodes,
     findPathToNode, 
-    applyView
+    applyView,
+    processChildrenWithLimit,
   ]);
 
   // Expose imperative handle
@@ -519,9 +871,9 @@ const GraphTreeContent: React.FC<GraphTreeContentProps> = ({
     getEdges: () => getEdges(),
     reset: () => {
       nodeOrderRef.current.clear();
-      const initialFlowNodes: Node[] = initialNodesProp.map((nodeConfig, index) => ({
+      const initialFlowNodes: GraphTreeNode[] = initialNodesProp.map((nodeConfig, index) => ({
         id: nodeConfig.id,
-        type: 'custom',
+        type: 'custom' as const,
         position: { x: index * 250, y: 0 },
         data: {
           id: nodeConfig.id,
@@ -543,41 +895,48 @@ const GraphTreeContent: React.FC<GraphTreeContentProps> = ({
 
   const containerClassName = `graph-tree-container${isDarkMode ? ' graph-tree-dark' : ''}${isAnimated ? ' graph-tree-animate-enabled' : ''}${isAnimatingNodes ? ' graph-tree-animating' : ''}${theme.className ? ` ${theme.className}` : ''}`;
 
+  // Callbacks for MoreNode context
+  const moreNodeCallbacks = useMemo(() => ({
+    onSelectHiddenNode: handleSelectHiddenNode,
+  }), [handleSelectHiddenNode]);
+
   return (
     <NodeRendererContext.Provider value={nodeRenderer}>
-      <div className={containerClassName}>
-        {controlCenter.show !== false && (
-          <ControlCenter
-            config={controlCenter}
-            isAutoFocus={isAutoFocus}
-            isAnimated={isAnimated}
-            isDarkMode={isDarkMode}
-            selectedView={currentView}
-            onAutoFocusChange={setIsAutoFocus}
-            onAnimatedChange={setIsAnimated}
-            onDarkModeChange={setIsDarkMode}
-            onViewChange={handleViewChange}
-          />
-        )}
-        
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={handleNodesChange}
-          onEdgesChange={onEdgesChange}
-          onNodeClick={handleNodeClick}
-          nodeTypes={nodeTypes}
-          fitView
-          minZoom={minZoom}
-          maxZoom={maxZoom}
-          defaultEdgeOptions={{
-            type: 'smoothstep',
-          }}
-        >
-          {showBackground && <Background color="var(--graph-tree-line, #94a3b8)" gap={20} />}
-          {showControls && <Controls />}
-        </ReactFlow>
-      </div>
+      <MoreNodeContext.Provider value={moreNodeCallbacks}>
+        <div className={containerClassName}>
+          {controlCenter.show !== false && (
+            <ControlCenter
+              config={controlCenter}
+              isAutoFocus={isAutoFocus}
+              isAnimated={isAnimated}
+              isDarkMode={isDarkMode}
+              selectedView={currentView}
+              onAutoFocusChange={setIsAutoFocus}
+              onAnimatedChange={setIsAnimated}
+              onDarkModeChange={setIsDarkMode}
+              onViewChange={handleViewChange}
+            />
+          )}
+          
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={handleNodesChange}
+            onEdgesChange={onEdgesChange}
+            onNodeClick={handleNodeClick}
+            nodeTypes={nodeTypes}
+            fitView
+            minZoom={minZoom}
+            maxZoom={maxZoom}
+            defaultEdgeOptions={{
+              type: 'smoothstep',
+            }}
+          >
+            {showBackground && <Background color="var(--graph-tree-line, #94a3b8)" gap={20} />}
+            {showControls && <Controls />}
+          </ReactFlow>
+        </div>
+      </MoreNodeContext.Provider>
     </NodeRendererContext.Provider>
   );
 };
