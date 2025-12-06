@@ -19,22 +19,15 @@ export const MoreNodeContext = React.createContext<MoreNodeCallbacks | null>(nul
 
 const MoreNode: React.FC<MoreNodeProps> = ({ data, id }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const searchInputRef = useRef<HTMLInputElement>(null);
   const callbacks = React.useContext(MoreNodeContext);
   const { setCenter, getNode } = useReactFlow();
 
   const hiddenNodes = data.hiddenNodes || [];
   const sortedNodes = [...hiddenNodes].sort((a, b) => 
     a.label.localeCompare(b.label)
-  );
-
-  // Filter nodes based on search query (case-insensitive)
-  const filteredNodes = sortedNodes.filter((node) =>
-    node.label.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Get the type from the first hidden node to display as badge
@@ -63,14 +56,8 @@ const MoreNode: React.FC<MoreNodeProps> = ({ data, id }) => {
           { zoom: 1.2, duration: 300 }
         );
       }
-      // Update position after centering animation and focus search input
-      setTimeout(() => {
-        updateDropdownPosition();
-        searchInputRef.current?.focus();
-      }, 350);
-    } else {
-      // Clear search when dropdown closes
-      setSearchQuery('');
+      // Update position after centering animation
+      setTimeout(updateDropdownPosition, 350);
     }
   }, [isOpen, id, getNode, setCenter, updateDropdownPosition]);
 
@@ -136,20 +123,6 @@ const MoreNode: React.FC<MoreNodeProps> = ({ data, id }) => {
     }
   }, [callbacks, hiddenNodes, data.originalParentId]);
 
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  }, []);
-
-  const handleSearchKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-    // Prevent event from bubbling to ReactFlow
-    e.stopPropagation();
-    
-    // Close dropdown on Escape
-    if (e.key === 'Escape') {
-      setIsOpen(false);
-    }
-  }, []);
-
   // Prevent ReactFlow from handling events on this node
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -175,62 +148,24 @@ const MoreNode: React.FC<MoreNodeProps> = ({ data, id }) => {
         <div className="graph-tree-more-dropdown-header">
           Select to expand
         </div>
-        <div className="graph-tree-more-dropdown-search">
-          <svg className="graph-tree-more-dropdown-search-icon" width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-            <path fillRule="evenodd" d="M11.5 7a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Zm-.82 4.74a6 6 0 1 1 1.06-1.06l3.04 3.04a.75.75 0 1 1-1.06 1.06l-3.04-3.04Z" clipRule="evenodd" />
-          </svg>
-          <input
-            ref={searchInputRef}
-            type="text"
-            className="graph-tree-more-dropdown-search-input"
-            placeholder="Search..."
-            value={searchQuery}
-            onChange={handleSearchChange}
-            onKeyDown={handleSearchKeyDown}
-            onClick={(e) => e.stopPropagation()}
-            onMouseDown={(e) => e.stopPropagation()}
-          />
-          {searchQuery && (
+        <div className="graph-tree-more-dropdown-list">
+          {sortedNodes.map((node) => (
             <button
+              key={node.id}
               type="button"
-              className="graph-tree-more-dropdown-search-clear"
+              className="graph-tree-more-dropdown-item"
+              role="option"
               onClick={(e) => {
                 e.stopPropagation();
-                setSearchQuery('');
-                searchInputRef.current?.focus();
+                e.preventDefault();
+                handleSelectNode(e, node);
               }}
-              aria-label="Clear search"
             >
-              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-                <path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.75.75 0 1 1 1.06 1.06L9.06 8l3.22 3.22a.75.75 0 1 1-1.06 1.06L8 9.06l-3.22 3.22a.75.75 0 0 1-1.06-1.06L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z" />
-              </svg>
+              <span className="graph-tree-more-dropdown-item-label">
+                {node.label}
+              </span>
             </button>
-          )}
-        </div>
-        <div className="graph-tree-more-dropdown-list">
-          {filteredNodes.length > 0 ? (
-            filteredNodes.map((node) => (
-              <button
-                key={node.id}
-                type="button"
-                className="graph-tree-more-dropdown-item"
-                role="option"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  handleSelectNode(e, node);
-                }}
-              >
-                <span className="graph-tree-more-dropdown-item-label">
-                  {node.label}
-                </span>
-              </button>
-            ))
-          ) : (
-            <div className="graph-tree-more-dropdown-empty">
-              No matches found
-            </div>
-          )}
+          ))}
         </div>
       </div>
     </div>,

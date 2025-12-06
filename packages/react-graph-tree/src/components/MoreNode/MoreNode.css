@@ -98,72 +98,9 @@
   border-bottom: 1px solid var(--graph-tree-node-border, #e2e8f0);
 }
 
-/* Search input container */
-.graph-tree-more-dropdown-search {
-  display: flex;
-  align-items: center;
-  padding: 8px 12px;
-  gap: 8px;
-  border-bottom: 1px solid var(--graph-tree-node-border, #e2e8f0);
-  background: var(--graph-tree-node-bg, #ffffff);
-}
-
-.graph-tree-more-dropdown-search-icon {
-  flex-shrink: 0;
-  color: var(--graph-tree-text, #1e293b);
-  opacity: 0.4;
-}
-
-.graph-tree-more-dropdown-search-input {
-  flex: 1;
-  border: none;
-  outline: none;
-  background: transparent;
-  font-size: 13px;
-  font-family: inherit;
-  color: var(--graph-tree-text, #1e293b);
-  min-width: 0;
-}
-
-.graph-tree-more-dropdown-search-input::placeholder {
-  color: var(--graph-tree-text, #1e293b);
-  opacity: 0.4;
-}
-
-.graph-tree-more-dropdown-search-clear {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  border: none;
-  border-radius: 50%;
-  background: var(--graph-tree-node-border, #e2e8f0);
-  color: var(--graph-tree-text, #1e293b);
-  opacity: 0.6;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.graph-tree-more-dropdown-search-clear:hover {
-  opacity: 1;
-  background: var(--graph-tree-accent, #6366f1);
-  color: #ffffff;
-}
-
 .graph-tree-more-dropdown-list {
   overflow-y: auto;
-  max-height: 180px;
-}
-
-/* Empty state when no matches */
-.graph-tree-more-dropdown-empty {
-  padding: 16px 14px;
-  text-align: center;
-  font-size: 13px;
-  color: var(--graph-tree-text, #1e293b);
-  opacity: 0.5;
+  max-height: 220px;
 }
 
 .graph-tree-more-dropdown-item {
@@ -209,24 +146,6 @@
 .graph-tree-dark .graph-tree-more-dropdown-header {
   background: var(--graph-tree-bg, #0f172a);
   border-color: var(--graph-tree-node-border, #334155);
-}
-
-.graph-tree-dark .graph-tree-more-dropdown-search {
-  background: var(--graph-tree-node-bg, #1e293b);
-  border-color: var(--graph-tree-node-border, #334155);
-}
-
-.graph-tree-dark .graph-tree-more-dropdown-search-input {
-  color: var(--graph-tree-text, #f1f5f9);
-}
-
-.graph-tree-dark .graph-tree-more-dropdown-search-input::placeholder {
-  color: var(--graph-tree-text, #f1f5f9);
-}
-
-.graph-tree-dark .graph-tree-more-dropdown-search-clear {
-  background: var(--graph-tree-node-border, #334155);
-  color: var(--graph-tree-text, #f1f5f9);
 }
 
 .graph-tree-dark .graph-tree-more-dropdown-item {

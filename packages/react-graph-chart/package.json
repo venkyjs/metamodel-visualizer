@@ -1,6 +1,6 @@
 {
   "name": "react-graph-chart",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A reusable React component for rendering interactive tree graphs with async node expansion",
   "type": "module",
   "main": "./dist/index.cjs",
