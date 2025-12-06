@@ -247,6 +247,33 @@ body.dark-mode .drawer-type-badge.root {
   font-weight: 500;
 }
 
+.metadata-boolean {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.metadata-boolean.true {
+  background: rgba(46, 125, 50, 0.15);
+  color: #2e7d32;
+}
+
+.metadata-boolean.false {
+  background: rgba(198, 40, 40, 0.15);
+  color: #c62828;
+}
+
+body.dark-mode .metadata-boolean.true {
+  background: rgba(76, 175, 80, 0.2);
+  color: #81c784;
+}
+
+body.dark-mode .metadata-boolean.false {
+  background: rgba(244, 67, 54, 0.2);
+  color: #e57373;
+}
+
 /* Scrollbar styling */
 .drawer-content::-webkit-scrollbar {
   width: 6px;
