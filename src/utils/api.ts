@@ -1,6 +1,16 @@
-import type { NodeData, GraphNode, ApiResponse, NodeType, GraphConfig } from '../types';
+import type { ApiResponse } from '../types';
 
 const API_BASE_URL = '/api';
+
+// Tree node as returned by the server
+export interface TreeNode {
+  id: string;
+  label: string;
+  type: string;
+  description?: string;
+  hasChildren: boolean;
+  metadata?: Record<string, unknown>;
+}
 
 // Generic funnel for API calls
 export async function request<T>(
@@ -21,15 +31,17 @@ export async function request<T>(
   }
 }
 
-// Fetch graph configuration
-export const fetchConfig = async (): Promise<GraphConfig> => {
-  const response = await fetch(`${API_BASE_URL}/config`);
+/**
+ * Fetch the initial root nodes for the tree
+ */
+export const fetchRootNodes = async (): Promise<TreeNode[]> => {
+  const response = await fetch(`${API_BASE_URL}/nodes`);
   
   if (!response.ok) {
-    throw new Error('Failed to fetch graph configuration');
+    throw new Error('Failed to fetch root nodes');
   }
   
-  const result: ApiResponse<GraphConfig> = await response.json();
+  const result: ApiResponse<TreeNode[]> = await response.json();
   
   if (!result.success) {
     throw new Error(`API error: ${result.message}`);
@@ -38,127 +50,22 @@ export const fetchConfig = async (): Promise<GraphConfig> => {
   return result.data;
 };
 
-// Fetch from a dynamic endpoint (config-driven)
-export const fetchFromEndpoint = async (endpoint: string, childType: NodeType): Promise<NodeData[]> => {
-  const response = await fetch(endpoint);
+/**
+ * Fetch children of a specific node
+ * The server determines what children a node has based on its ID
+ */
+export const fetchNodeChildren = async (nodeId: string): Promise<TreeNode[]> => {
+  const response = await fetch(`${API_BASE_URL}/nodes/${encodeURIComponent(nodeId)}/children`);
   
   if (!response.ok) {
-    throw new Error(`Failed to fetch from ${endpoint}`);
+    throw new Error(`Failed to fetch children for node ${nodeId}`);
   }
   
-  const result: ApiResponse<GraphNode[]> = await response.json();
+  const result: ApiResponse<TreeNode[]> = await response.json();
   
   if (!result.success) {
     throw new Error(`API error: ${result.message}`);
   }
   
-  return result.data.map((node) => ({
-    id: node.id,
-    label: node.name,
-    nodeType: childType,
-    description: node.description,
-    properties: node.properties,
-    metadata: node.metadata,
-    isExpanded: false,
-    isLoading: false,
-    level: 1,
-  }));
-};
-
-// Fetch nodes by type
-export const fetchNodesByType = async (type: string): Promise<NodeData[]> => {
-  const response = await fetch(`${API_BASE_URL}/${type}`);
-  
-  if (!response.ok) {
-    throw new Error(`Failed to fetch ${type}`);
-  }
-  
-  const result: ApiResponse<GraphNode[]> = await response.json();
-  
-  if (!result.success) {
-    throw new Error(`API error: ${result.message}`);
-  }
-  
-  // Transform GraphNode to NodeData
-  return result.data.map((node) => ({
-    id: node.id,
-    label: node.name,
-    nodeType: node.type,
-    description: node.description,
-    properties: node.properties,
-    metadata: node.metadata,
-    isExpanded: false,
-    isLoading: false,
-    level: 1,
-  }));
-};
-
-// Fetch datasets for a specific class
-export const fetchClassDatasets = async (classId: string): Promise<NodeData[]> => {
-  const response = await fetch(`${API_BASE_URL}/classes/${classId}/datasets`);
-  
-  if (!response.ok) {
-    throw new Error(`Failed to fetch datasets for class ${classId}`);
-  }
-  
-  const result: ApiResponse<GraphNode[]> = await response.json();
-  
-  if (!result.success) {
-    throw new Error(`API error: ${result.message}`);
-  }
-  
-  return result.data.map((node) => ({
-    id: node.id,
-    label: node.name,
-    nodeType: 'dataset' as NodeType,
-    description: node.description,
-    properties: node.properties,
-    metadata: node.metadata,
-    isExpanded: false,
-    isLoading: false,
-    level: 1,
-    classId: classId,
-  }));
-};
-
-// Fetch attributes for a specific class
-export const fetchClassAttributes = async (classId: string): Promise<NodeData[]> => {
-  const response = await fetch(`${API_BASE_URL}/classes/${classId}/attributes`);
-  
-  if (!response.ok) {
-    throw new Error(`Failed to fetch attributes for class ${classId}`);
-  }
-  
-  const result: ApiResponse<GraphNode[]> = await response.json();
-  
-  if (!result.success) {
-    throw new Error(`API error: ${result.message}`);
-  }
-  
-  return result.data.map((node) => ({
-    id: node.id,
-    label: node.name,
-    nodeType: 'attribute' as NodeType,
-    description: node.description,
-    properties: node.properties,
-    metadata: node.metadata,
-    isExpanded: false,
-    isLoading: false,
-    level: 1,
-    classId: classId,
-  }));
-};
-
-// Type mapping for API calls
-export const getApiEndpoint = (label: string): string => {
-  switch (label.toLowerCase()) {
-    case 'dataspaces':
-      return 'dataspaces';
-    case 'classes':
-      return 'classes';
-    case 'business concepts':
-      return 'businessConcepts';
-    default:
-      return label.toLowerCase();
-  }
+  return result.data;
 };

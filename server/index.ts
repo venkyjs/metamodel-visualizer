@@ -2,7 +2,6 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,14 +13,20 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
-// Config file path
-const configPath = path.join(__dirname, '../config/graph-config.json');
+// Types for API responses
+interface TreeNode {
+  id: string;
+  label: string;
+  type: string;
+  description?: string;
+  hasChildren: boolean;
+  metadata?: Record<string, unknown>;
+}
 
-// Types
-interface GraphNode {
+// Internal data types
+interface DataspaceData {
   id: string;
   name: string;
-  type: 'dataspace' | 'class' | 'businessConcept' | 'classDetails' | 'dataset' | 'attribute';
   description: string;
   properties: Record<string, string | number | boolean>;
   metadata: {
@@ -32,10 +37,35 @@ interface GraphNode {
   };
 }
 
-interface Dataset {
+interface ClassData {
   id: string;
   name: string;
-  type: 'dataset';
+  description: string;
+  properties: Record<string, string | number | boolean>;
+  metadata: {
+    createdAt: string;
+    updatedAt: string;
+    owner: string;
+    tags: string[];
+  };
+}
+
+interface BusinessConceptData {
+  id: string;
+  name: string;
+  description: string;
+  properties: Record<string, string | number | boolean>;
+  metadata: {
+    createdAt: string;
+    updatedAt: string;
+    owner: string;
+    tags: string[];
+  };
+}
+
+interface DatasetData {
+  id: string;
+  name: string;
   description: string;
   classId: string;
   properties: {
@@ -53,10 +83,9 @@ interface Dataset {
   };
 }
 
-interface Attribute {
+interface AttributeData {
   id: string;
   name: string;
-  type: 'attribute';
   description: string;
   classId: string;
   properties: {
@@ -76,11 +105,10 @@ interface Attribute {
 }
 
 // Mock Data
-const mockDataspaces: GraphNode[] = [
+const mockDataspaces: DataspaceData[] = [
   {
     id: 'ds-001',
     name: 'Customer Data Hub',
-    type: 'dataspace',
     description: 'Central repository for all customer-related data including profiles, interactions, and preferences.',
     properties: {
       region: 'North America',
@@ -99,7 +127,6 @@ const mockDataspaces: GraphNode[] = [
   {
     id: 'ds-002',
     name: 'Financial Transactions',
-    type: 'dataspace',
     description: 'Secure storage for all financial transaction records and audit trails.',
     properties: {
       region: 'Global',
@@ -118,7 +145,6 @@ const mockDataspaces: GraphNode[] = [
   {
     id: 'ds-003',
     name: 'Product Catalog',
-    type: 'dataspace',
     description: 'Master data for all products, SKUs, and inventory management.',
     properties: {
       region: 'Global',
@@ -137,7 +163,6 @@ const mockDataspaces: GraphNode[] = [
   {
     id: 'ds-004',
     name: 'Analytics Warehouse',
-    type: 'dataspace',
     description: 'Aggregated and processed data optimized for business intelligence and reporting.',
     properties: {
       region: 'US-East',
@@ -155,11 +180,10 @@ const mockDataspaces: GraphNode[] = [
   },
 ];
 
-const mockClasses: GraphNode[] = [
+const mockClasses: ClassData[] = [
   {
     id: 'cls-001',
     name: 'Customer',
-    type: 'class',
     description: 'Represents an individual or organization that purchases products or services.',
     properties: {
       attributes: 12,
@@ -177,7 +201,6 @@ const mockClasses: GraphNode[] = [
   {
     id: 'cls-002',
     name: 'Order',
-    type: 'class',
     description: 'A request by a customer to purchase one or more products or services.',
     properties: {
       attributes: 18,
@@ -195,7 +218,6 @@ const mockClasses: GraphNode[] = [
   {
     id: 'cls-003',
     name: 'Product',
-    type: 'class',
     description: 'A tangible or intangible item offered for sale.',
     properties: {
       attributes: 25,
@@ -213,7 +235,6 @@ const mockClasses: GraphNode[] = [
   {
     id: 'cls-004',
     name: 'Payment',
-    type: 'class',
     description: 'A financial transaction representing the transfer of value.',
     properties: {
       attributes: 15,
@@ -231,7 +252,6 @@ const mockClasses: GraphNode[] = [
   {
     id: 'cls-005',
     name: 'Address',
-    type: 'class',
     description: 'Physical or digital location associated with entities.',
     properties: {
       attributes: 10,
@@ -248,11 +268,10 @@ const mockClasses: GraphNode[] = [
   },
 ];
 
-const mockBusinessConcepts: GraphNode[] = [
+const mockBusinessConcepts: BusinessConceptData[] = [
   {
     id: 'bc-001',
     name: 'Customer Lifetime Value',
-    type: 'businessConcept',
     description: 'The total revenue a business can expect from a single customer account throughout their relationship.',
     properties: {
       formula: 'Average Purchase Value × Purchase Frequency × Customer Lifespan',
@@ -270,7 +289,6 @@ const mockBusinessConcepts: GraphNode[] = [
   {
     id: 'bc-002',
     name: 'Net Revenue',
-    type: 'businessConcept',
     description: 'Total revenue minus returns, allowances, and discounts.',
     properties: {
       formula: 'Gross Revenue - Returns - Discounts - Allowances',
@@ -288,7 +306,6 @@ const mockBusinessConcepts: GraphNode[] = [
   {
     id: 'bc-003',
     name: 'Inventory Turnover',
-    type: 'businessConcept',
     description: 'Measures how many times inventory is sold and replaced over a period.',
     properties: {
       formula: 'Cost of Goods Sold / Average Inventory',
@@ -306,7 +323,6 @@ const mockBusinessConcepts: GraphNode[] = [
   {
     id: 'bc-004',
     name: 'Customer Churn Rate',
-    type: 'businessConcept',
     description: 'The percentage of customers who stop using your product or service during a given time period.',
     properties: {
       formula: '(Customers at Start - Customers at End) / Customers at Start × 100',
@@ -324,7 +340,6 @@ const mockBusinessConcepts: GraphNode[] = [
   {
     id: 'bc-005',
     name: 'Order Fulfillment Time',
-    type: 'businessConcept',
     description: 'The average time from order placement to delivery completion.',
     properties: {
       formula: 'Delivery Date - Order Date',
@@ -342,7 +357,6 @@ const mockBusinessConcepts: GraphNode[] = [
   {
     id: 'bc-006',
     name: 'Gross Margin',
-    type: 'businessConcept',
     description: 'The difference between revenue and cost of goods sold, expressed as a percentage of revenue.',
     properties: {
       formula: '(Revenue - COGS) / Revenue × 100',
@@ -360,12 +374,11 @@ const mockBusinessConcepts: GraphNode[] = [
 ];
 
 // Mock Datasets per Class
-const mockDatasets: Record<string, Dataset[]> = {
-  'cls-001': [ // Customer class datasets
+const mockDatasets: Record<string, DatasetData[]> = {
+  'cls-001': [
     {
       id: 'ds-cust-001',
       name: 'Customer Profiles',
-      type: 'dataset',
       description: 'Complete customer profile information including demographics and preferences.',
       classId: 'cls-001',
       properties: {
@@ -385,7 +398,6 @@ const mockDatasets: Record<string, Dataset[]> = {
     {
       id: 'ds-cust-002',
       name: 'Customer Interactions',
-      type: 'dataset',
       description: 'Historical record of all customer interactions across channels.',
       classId: 'cls-001',
       properties: {
@@ -403,11 +415,10 @@ const mockDatasets: Record<string, Dataset[]> = {
       },
     },
   ],
-  'cls-002': [ // Order class datasets
+  'cls-002': [
     {
       id: 'ds-ord-001',
       name: 'Orders Master',
-      type: 'dataset',
       description: 'Primary order records with complete order details.',
       classId: 'cls-002',
       properties: {
@@ -427,7 +438,6 @@ const mockDatasets: Record<string, Dataset[]> = {
     {
       id: 'ds-ord-002',
       name: 'Order Line Items',
-      type: 'dataset',
       description: 'Individual line items within each order.',
       classId: 'cls-002',
       properties: {
@@ -445,11 +455,10 @@ const mockDatasets: Record<string, Dataset[]> = {
       },
     },
   ],
-  'cls-003': [ // Product class datasets
+  'cls-003': [
     {
       id: 'ds-prod-001',
       name: 'Product Catalog',
-      type: 'dataset',
       description: 'Complete product catalog with all product information.',
       classId: 'cls-003',
       properties: {
@@ -467,11 +476,10 @@ const mockDatasets: Record<string, Dataset[]> = {
       },
     },
   ],
-  'cls-004': [ // Payment class datasets
+  'cls-004': [
     {
       id: 'ds-pay-001',
       name: 'Payment Transactions',
-      type: 'dataset',
       description: 'All payment transaction records.',
       classId: 'cls-004',
       properties: {
@@ -489,11 +497,10 @@ const mockDatasets: Record<string, Dataset[]> = {
       },
     },
   ],
-  'cls-005': [ // Address class datasets
+  'cls-005': [
     {
       id: 'ds-addr-001',
       name: 'Address Registry',
-      type: 'dataset',
       description: 'Validated and standardized address records.',
       classId: 'cls-005',
       properties: {
@@ -514,12 +521,11 @@ const mockDatasets: Record<string, Dataset[]> = {
 };
 
 // Mock Attributes per Class
-const mockAttributes: Record<string, Attribute[]> = {
-  'cls-001': [ // Customer class attributes
+const mockAttributes: Record<string, AttributeData[]> = {
+  'cls-001': [
     {
       id: 'attr-cust-001',
       name: 'customer_id',
-      type: 'attribute',
       description: 'Unique identifier for each customer.',
       classId: 'cls-001',
       properties: {
@@ -540,7 +546,6 @@ const mockAttributes: Record<string, Attribute[]> = {
     {
       id: 'attr-cust-002',
       name: 'email',
-      type: 'attribute',
       description: 'Customer email address for communication.',
       classId: 'cls-001',
       properties: {
@@ -561,7 +566,6 @@ const mockAttributes: Record<string, Attribute[]> = {
     {
       id: 'attr-cust-003',
       name: 'full_name',
-      type: 'attribute',
       description: 'Complete name of the customer.',
       classId: 'cls-001',
       properties: {
@@ -582,7 +586,6 @@ const mockAttributes: Record<string, Attribute[]> = {
     {
       id: 'attr-cust-004',
       name: 'created_at',
-      type: 'attribute',
       description: 'Timestamp when customer record was created.',
       classId: 'cls-001',
       properties: {
@@ -601,11 +604,10 @@ const mockAttributes: Record<string, Attribute[]> = {
       },
     },
   ],
-  'cls-002': [ // Order class attributes
+  'cls-002': [
     {
       id: 'attr-ord-001',
       name: 'order_id',
-      type: 'attribute',
       description: 'Unique identifier for each order.',
       classId: 'cls-002',
       properties: {
@@ -626,7 +628,6 @@ const mockAttributes: Record<string, Attribute[]> = {
     {
       id: 'attr-ord-002',
       name: 'customer_id',
-      type: 'attribute',
       description: 'Reference to the customer who placed the order.',
       classId: 'cls-002',
       properties: {
@@ -647,7 +648,6 @@ const mockAttributes: Record<string, Attribute[]> = {
     {
       id: 'attr-ord-003',
       name: 'total_amount',
-      type: 'attribute',
       description: 'Total monetary value of the order.',
       classId: 'cls-002',
       properties: {
@@ -668,7 +668,6 @@ const mockAttributes: Record<string, Attribute[]> = {
     {
       id: 'attr-ord-004',
       name: 'order_status',
-      type: 'attribute',
       description: 'Current status of the order.',
       classId: 'cls-002',
       properties: {
@@ -687,11 +686,10 @@ const mockAttributes: Record<string, Attribute[]> = {
       },
     },
   ],
-  'cls-003': [ // Product class attributes
+  'cls-003': [
     {
       id: 'attr-prod-001',
       name: 'product_id',
-      type: 'attribute',
       description: 'Unique identifier for each product.',
       classId: 'cls-003',
       properties: {
@@ -712,7 +710,6 @@ const mockAttributes: Record<string, Attribute[]> = {
     {
       id: 'attr-prod-002',
       name: 'sku',
-      type: 'attribute',
       description: 'Stock Keeping Unit code.',
       classId: 'cls-003',
       properties: {
@@ -733,7 +730,6 @@ const mockAttributes: Record<string, Attribute[]> = {
     {
       id: 'attr-prod-003',
       name: 'price',
-      type: 'attribute',
       description: 'Current selling price of the product.',
       classId: 'cls-003',
       properties: {
@@ -752,11 +748,10 @@ const mockAttributes: Record<string, Attribute[]> = {
       },
     },
   ],
-  'cls-004': [ // Payment class attributes
+  'cls-004': [
     {
       id: 'attr-pay-001',
       name: 'payment_id',
-      type: 'attribute',
       description: 'Unique identifier for each payment.',
       classId: 'cls-004',
       properties: {
@@ -777,7 +772,6 @@ const mockAttributes: Record<string, Attribute[]> = {
     {
       id: 'attr-pay-002',
       name: 'amount',
-      type: 'attribute',
       description: 'Payment amount.',
       classId: 'cls-004',
       properties: {
@@ -798,7 +792,6 @@ const mockAttributes: Record<string, Attribute[]> = {
     {
       id: 'attr-pay-003',
       name: 'payment_method',
-      type: 'attribute',
       description: 'Method used for payment.',
       classId: 'cls-004',
       properties: {
@@ -817,11 +810,10 @@ const mockAttributes: Record<string, Attribute[]> = {
       },
     },
   ],
-  'cls-005': [ // Address class attributes
+  'cls-005': [
     {
       id: 'attr-addr-001',
       name: 'address_id',
-      type: 'attribute',
       description: 'Unique identifier for each address.',
       classId: 'cls-005',
       properties: {
@@ -842,7 +834,6 @@ const mockAttributes: Record<string, Attribute[]> = {
     {
       id: 'attr-addr-002',
       name: 'street_address',
-      type: 'attribute',
       description: 'Street number and name.',
       classId: 'cls-005',
       properties: {
@@ -863,7 +854,6 @@ const mockAttributes: Record<string, Attribute[]> = {
     {
       id: 'attr-addr-003',
       name: 'postal_code',
-      type: 'attribute',
       description: 'ZIP or postal code.',
       classId: 'cls-005',
       properties: {
@@ -887,95 +877,165 @@ const mockAttributes: Record<string, Attribute[]> = {
 // Helper to add delay for realistic API feel
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-// API routes
+// ============================================================================
+// Node Resolution Logic - Server determines the tree structure
+// ============================================================================
+
+/**
+ * Get the initial/root nodes for the tree
+ */
+function getRootNodes(): TreeNode[] {
+  return [
+    {
+      id: 'root-dataspaces',
+      label: 'Dataspaces',
+      type: 'root',
+      hasChildren: true,
+    },
+    {
+      id: 'root-classes',
+      label: 'Classes',
+      type: 'root',
+      hasChildren: true,
+    },
+    {
+      id: 'root-businessconcepts',
+      label: 'Business Concepts',
+      type: 'root',
+      hasChildren: true,
+    },
+  ];
+}
+
+/**
+ * Get children for any given node ID
+ * The server determines what children a node has based on its ID and type
+ */
+function getChildrenForNode(nodeId: string): TreeNode[] {
+  // Root nodes - return the corresponding data
+  if (nodeId === 'root-dataspaces') {
+    return mockDataspaces.map(ds => ({
+      id: ds.id,
+      label: ds.name,
+      type: 'dataspace',
+      description: ds.description,
+      hasChildren: false,
+      metadata: { ...ds.properties, ...ds.metadata },
+    }));
+  }
+
+  if (nodeId === 'root-classes') {
+    return mockClasses.map(cls => ({
+      id: cls.id,
+      label: cls.name,
+      type: 'class',
+      description: cls.description,
+      hasChildren: true, // Classes have Datasets and Attributes as children
+      metadata: { ...cls.properties, ...cls.metadata },
+    }));
+  }
+
+  if (nodeId === 'root-businessconcepts') {
+    return mockBusinessConcepts.map(bc => ({
+      id: bc.id,
+      label: bc.name,
+      type: 'businessConcept',
+      description: bc.description,
+      hasChildren: false,
+      metadata: { ...bc.properties, ...bc.metadata },
+    }));
+  }
+
+  // Class nodes - return static children (Datasets folder, Attributes folder)
+  if (nodeId.startsWith('cls-')) {
+    const classData = mockClasses.find(c => c.id === nodeId);
+    if (classData) {
+      return [
+        {
+          id: `${nodeId}-datasets`,
+          label: 'Datasets',
+          type: 'classDetails',
+          description: `Datasets associated with ${classData.name}`,
+          hasChildren: true,
+        },
+        {
+          id: `${nodeId}-attributes`,
+          label: 'Attributes',
+          type: 'classDetails',
+          description: `Attributes defined in ${classData.name}`,
+          hasChildren: true,
+        },
+      ];
+    }
+  }
+
+  // ClassDetails nodes (Datasets folder or Attributes folder)
+  if (nodeId.endsWith('-datasets')) {
+    const classId = nodeId.replace('-datasets', '');
+    const datasets = mockDatasets[classId] || [];
+    return datasets.map(ds => ({
+      id: ds.id,
+      label: ds.name,
+      type: 'dataset',
+      description: ds.description,
+      hasChildren: false,
+      metadata: { ...ds.properties, ...ds.metadata },
+    }));
+  }
+
+  if (nodeId.endsWith('-attributes')) {
+    const classId = nodeId.replace('-attributes', '');
+    const attributes = mockAttributes[classId] || [];
+    return attributes.map(attr => ({
+      id: attr.id,
+      label: attr.name,
+      type: 'attribute',
+      description: attr.description,
+      hasChildren: false,
+      metadata: { ...attr.properties, ...attr.metadata },
+    }));
+  }
+
+  // No children found
+  return [];
+}
+
+// ============================================================================
+// API Routes
+// ============================================================================
+
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Serve graph config - reads from file on each request for hot reload
-app.get('/api/config', (_req, res) => {
-  try {
-    const configData = fs.readFileSync(configPath, 'utf-8');
-    const config = JSON.parse(configData);
-    res.json({
-      success: true,
-      data: config,
-    });
-  } catch (error) {
-    console.error('Error reading config:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to load configuration',
-    });
-  }
-});
-
-app.get('/api/dataspaces', async (_req, res) => {
-  await delay(600);
+/**
+ * GET /api/nodes
+ * Returns the initial root nodes for the tree
+ */
+app.get('/api/nodes', async (_req, res) => {
+  await delay(300);
+  
+  const nodes = getRootNodes();
   res.json({
     success: true,
-    data: mockDataspaces,
+    data: nodes,
   });
 });
 
-app.get('/api/classes', async (_req, res) => {
-  await delay(500);
-  res.json({
-    success: true,
-    data: mockClasses,
-  });
-});
-
-app.get('/api/businessConcepts', async (_req, res) => {
-  await delay(700);
-  res.json({
-    success: true,
-    data: mockBusinessConcepts,
-  });
-});
-
-// Get datasets for a specific class
-app.get('/api/classes/:classId/datasets', async (req, res) => {
-  const { classId } = req.params;
+/**
+ * GET /api/nodes/:nodeId/children
+ * Returns the children of a specific node
+ * The server determines what children a node has based on its ID
+ */
+app.get('/api/nodes/:nodeId/children', async (req, res) => {
+  const { nodeId } = req.params;
   await delay(400);
   
-  const datasets = mockDatasets[classId] || [];
+  const children = getChildrenForNode(nodeId);
   res.json({
     success: true,
-    data: datasets,
+    data: children,
   });
-});
-
-// Get attributes for a specific class
-app.get('/api/classes/:classId/attributes', async (req, res) => {
-  const { classId } = req.params;
-  await delay(400);
-  
-  const attributes = mockAttributes[classId] || [];
-  res.json({
-    success: true,
-    data: attributes,
-  });
-});
-
-// Generic endpoint for fetching by type
-app.get('/api/:type', async (req, res) => {
-  const { type } = req.params;
-  await delay(500);
-  
-  switch (type.toLowerCase()) {
-    case 'dataspaces':
-      res.json({ success: true, data: mockDataspaces });
-      break;
-    case 'classes':
-      res.json({ success: true, data: mockClasses });
-      break;
-    case 'businessconcepts':
-      res.json({ success: true, data: mockBusinessConcepts });
-      break;
-    default:
-      res.status(404).json({ success: false, message: `Unknown type: ${type}` });
-  }
 });
 
 // Serve static files from the client build in production
