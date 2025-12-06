@@ -1,152 +1,224 @@
-import { useState, useEffect, useCallback } from 'react';
-import { ReactFlowProvider } from '@xyflow/react';
-import { Moon, Sun, Target, Eye, ChevronDown, Check, Sparkles } from 'lucide-react';
-import CanvasContent from './components/Canvas/Canvas';
+import { useCallback, useRef, useState, useEffect } from 'react';
+import { 
+  GraphTree, 
+  type GraphTreeHandle, 
+  type GraphTreeNodeData, 
+  type ChildNode,
+} from 'react-graph-tree';
+import { fetchConfig, fetchFromEndpoint, request } from './utils/api';
+import type { GraphConfig, NodeTypeConfig, NodeData } from './types';
+import Drawer from './components/Drawer/Drawer';
+import CustomNodeRenderer from './components/CustomNodeRenderer/CustomNodeRenderer';
 import './App.css';
 
-type ViewOption = 'everything' | 'active-path' | 'current-node' | null;
+// Cached config
+let cachedConfig: GraphConfig | null = null;
 
 function App() {
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [isAutoFocus, setIsAutoFocus] = useState(true);
-  const [isAnimated, setIsAnimated] = useState(false);
-  const [viewDropdownOpen, setViewDropdownOpen] = useState(false);
-  const [selectedView, setSelectedView] = useState<ViewOption>(() => {
-    const saved = localStorage.getItem('selectedView');
-    return saved ? (saved as ViewOption) : null;
-  });
+  const graphRef = useRef<GraphTreeHandle>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedNodeData, setSelectedNodeData] = useState<NodeData | null>(null);
+  const [config, setConfig] = useState<GraphConfig | null>(null);
 
-  useEffect(() => {
-    if (isDarkMode) {
-      document.body.classList.add('dark-mode');
-    } else {
-      document.body.classList.remove('dark-mode');
+  // Load config on first render
+  const loadConfig = useCallback(async () => {
+    if (cachedConfig) return cachedConfig;
+    
+    const loadedConfig = await request(() => fetchConfig());
+    if (loadedConfig) {
+      cachedConfig = loadedConfig;
+      setConfig(loadedConfig);
     }
-  }, [isDarkMode]);
-
-  // Dispatch saved view on initial load
-  useEffect(() => {
-    if (selectedView) {
-      window.dispatchEvent(new CustomEvent('viewChange', { detail: selectedView }));
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    return loadedConfig;
   }, []);
 
-  const handleViewChange = useCallback((option: ViewOption) => {
-    // Toggle off if clicking the same option, otherwise set new option
-    const newView = selectedView === option ? null : option;
-    setSelectedView(newView);
-    if (newView) {
-      localStorage.setItem('selectedView', newView);
-    } else {
-      localStorage.removeItem('selectedView');
-    }
-    window.dispatchEvent(new CustomEvent('viewChange', { detail: newView }));
-    setViewDropdownOpen(false);
-  }, [selectedView]);
-
-  const getViewLabel = (view: ViewOption): string => {
-    switch (view) {
-      case 'everything': return 'View: Everything';
-      case 'active-path': return 'View: Active Path';
-      case 'current-node': return 'View: Current Node';
-      default: return 'View';
-    }
-  };
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (!target.closest('.view-dropdown-container')) {
-        setViewDropdownOpen(false);
+  // Initial nodes - will be loaded from config
+  const [initialNodes] = useState(() => {
+    // Start with empty array, will load from config
+    loadConfig().then(conf => {
+      if (conf && graphRef.current) {
+        // Trigger a reset with the loaded config
+        graphRef.current.reset();
       }
-    };
+    });
     
-    if (viewDropdownOpen) {
-      document.addEventListener('click', handleClickOutside);
+    // Return placeholder nodes (will be replaced by config)
+    return [
+      { id: 'dataspaces-root', label: 'Dataspaces', type: 'root' },
+      { id: 'classes-root', label: 'Classes', type: 'root' },
+      { id: 'concepts-root', label: 'Business Concepts', type: 'root' },
+    ];
+  });
+
+  // Resolve endpoint placeholders
+  const resolveEndpoint = useCallback((endpoint: string, nodeData: GraphTreeNodeData & { classId?: string; parentId?: string }): string => {
+    let resolved = endpoint;
+    
+    if (resolved.includes('{classId}')) {
+      const classId = nodeData.classId || nodeData.parentId;
+      resolved = resolved.replace('{classId}', classId || '');
     }
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, [viewDropdownOpen]);
+    
+    if (resolved.includes('{parentId}')) {
+      resolved = resolved.replace('{parentId}', nodeData.parentId || '');
+    }
+    
+    if (resolved.includes('{id}')) {
+      resolved = resolved.replace('{id}', nodeData.id);
+    }
+    
+    return resolved;
+  }, []);
+
+  // Create static children based on config
+  const createStaticChildren = useCallback((
+    parentNode: GraphTreeNodeData,
+    typeConfig: NodeTypeConfig
+  ): ChildNode[] => {
+    if (!typeConfig.staticChildren) {
+      return [];
+    }
+
+    return typeConfig.staticChildren.map((childConfig) => {
+      const childId = `${parentNode.id}-${childConfig.idSuffix}`;
+      const description = childConfig.descriptionTemplate
+        ? childConfig.descriptionTemplate.replace('{parentLabel}', parentNode.label)
+        : undefined;
+
+      return {
+        id: childId,
+        label: childConfig.label,
+        type: childConfig.nodeType,
+        description,
+        parentId: parentNode.id,
+        classId: parentNode.id,
+      };
+    });
+  }, []);
+
+  // Handle node expansion - this is the async callback that returns children
+  const handleNodeExpand = useCallback(async (node: GraphTreeNodeData): Promise<ChildNode[] | null> => {
+    const conf = config || await loadConfig();
+    if (!conf) return null;
+
+    const nodeType = node.type || 'root';
+    const typeConfig = conf.nodeTypeConfig[nodeType];
+    
+    // Handle leaf nodes
+    if (!typeConfig || typeConfig.clickBehavior === 'none') {
+      // Open drawer for leaf nodes
+      setSelectedNodeData({
+        id: node.id,
+        label: node.label,
+        nodeType: nodeType,
+        description: node.description,
+        isExpanded: false,
+        isLoading: false,
+      } as NodeData);
+      setDrawerOpen(true);
+      return null;
+    }
+
+    // Handle static children
+    if (typeConfig.clickBehavior === 'staticChildren') {
+      return createStaticChildren(node, typeConfig);
+    }
+
+    // Handle fetch by label
+    if (typeConfig.clickBehavior === 'fetchByLabel' && typeConfig.labelMapping) {
+      const labelConfig = typeConfig.labelMapping[node.label];
+      
+      if (labelConfig) {
+        const resolvedEndpoint = resolveEndpoint(labelConfig.endpoint, node as GraphTreeNodeData & { classId?: string; parentId?: string });
+        
+        const childrenData = await request(() => 
+          fetchFromEndpoint(resolvedEndpoint, labelConfig.childType)
+        );
+
+        if (childrenData && childrenData.length > 0) {
+          return childrenData.map((child) => ({
+            id: child.id,
+            label: child.label,
+            type: child.nodeType,
+            description: child.description,
+            classId: (node as GraphTreeNodeData & { classId?: string }).classId || (node as GraphTreeNodeData & { parentId?: string }).parentId,
+          }));
+        }
+      }
+    }
+
+    return null;
+  }, [config, loadConfig, createStaticChildren, resolveEndpoint]);
+
+  // Handle node click - for opening drawer on any node
+  const handleNodeClick = useCallback((node: GraphTreeNodeData) => {
+    // Only open drawer if it's a leaf node type
+    const leafTypes = ['dataspace', 'businessConcept', 'dataset', 'attribute'];
+    if (leafTypes.includes(node.type || '')) {
+      setSelectedNodeData({
+        id: node.id,
+        label: node.label,
+        nodeType: node.type || 'root',
+        description: node.description,
+        isExpanded: false,
+        isLoading: false,
+      } as NodeData);
+      setDrawerOpen(true);
+    }
+  }, []);
+
+  const closeDrawer = useCallback(() => {
+    setDrawerOpen(false);
+  }, []);
+
+  // Listen for custom event to open drawer (from details button click)
+  useEffect(() => {
+    const handleOpenDetails = (e: CustomEvent) => {
+      const nodeData = e.detail;
+      setSelectedNodeData({
+        id: nodeData.id,
+        label: nodeData.label,
+        nodeType: nodeData.type || 'root',
+        description: nodeData.description,
+        isExpanded: false,
+        isLoading: false,
+      } as NodeData);
+      setDrawerOpen(true);
+    };
+
+    window.addEventListener('openNodeDetails', handleOpenDetails as EventListener);
+    return () => {
+      window.removeEventListener('openNodeDetails', handleOpenDetails as EventListener);
+    };
+  }, []);
 
   return (
     <div className="app-container">
-      <div className="controls-overlay">
-        <div className="control-center-title">Control Center</div>
-        
-        <div className="control-item" title="Toggle Auto-Focus">
-          <Target size={20} />
-          <span>Auto Focus</span>
-          <label className="switch">
-            <input 
-              type="checkbox" 
-              checked={isAutoFocus} 
-              onChange={(e) => setIsAutoFocus(e.target.checked)} 
-            />
-            <span className="slider"></span>
-          </label>
-        </div>
-
-        <div className="control-item" title="Toggle Animations">
-          <Sparkles size={20} />
-          <span>Animate</span>
-          <label className="switch">
-            <input 
-              type="checkbox" 
-              checked={isAnimated} 
-              onChange={(e) => setIsAnimated(e.target.checked)} 
-            />
-            <span className="slider"></span>
-          </label>
-        </div>
-        
-        <div className="control-item" onClick={() => setIsDarkMode(!isDarkMode)} title="Toggle Theme">
-          {isDarkMode ? <Moon size={20} /> : <Sun size={20} />}
-          <span>{isDarkMode ? 'Dark Mode' : 'Light Mode'}</span>
-        </div>
-
-        <div className="view-dropdown-container">
-          <div 
-            className="control-item view-dropdown-trigger" 
-            onClick={() => setViewDropdownOpen(!viewDropdownOpen)}
-            title="View Options"
-          >
-            <Eye size={20} />
-            <span>{getViewLabel(selectedView)}</span>
-            <ChevronDown size={16} className={`chevron ${viewDropdownOpen ? 'open' : ''}`} />
-          </div>
-          
-          {viewDropdownOpen && (
-            <div className="view-dropdown-menu">
-              <div 
-                className={`view-dropdown-item ${selectedView === 'everything' ? 'selected' : ''}`}
-                onClick={() => handleViewChange('everything')}
-              >
-                <span>Show Everything</span>
-                {selectedView === 'everything' && <Check size={14} />}
-              </div>
-              <div 
-                className={`view-dropdown-item ${selectedView === 'active-path' ? 'selected' : ''}`}
-                onClick={() => handleViewChange('active-path')}
-              >
-                <span>Show Active Path</span>
-                {selectedView === 'active-path' && <Check size={14} />}
-              </div>
-              <div 
-                className={`view-dropdown-item ${selectedView === 'current-node' ? 'selected' : ''}`}
-                onClick={() => handleViewChange('current-node')}
-              >
-                <span>Show Current Node</span>
-                {selectedView === 'current-node' && <Check size={14} />}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <ReactFlowProvider>
-        <CanvasContent isAutoFocus={isAutoFocus} isAnimated={isAnimated} />
-      </ReactFlowProvider>
+      <GraphTree
+        ref={graphRef}
+        initialNodes={initialNodes}
+        onNodeExpand={handleNodeExpand}
+        onNodeClick={handleNodeClick}
+        controlCenter={{
+          show: true,
+          defaultAutoFocus: true,
+          defaultAnimated: false,
+          title: 'Control Center',
+        }}
+        theme={{
+          darkMode: false,
+          className: 'custom-graph-theme',
+        }}
+        nodeRenderer={CustomNodeRenderer}
+        showControls={true}
+        showBackground={true}
+      />
+      
+      <Drawer 
+        isOpen={drawerOpen} 
+        onClose={closeDrawer} 
+        nodeData={selectedNodeData} 
+      />
     </div>
   );
 }

@@ -1,0 +1,109 @@
+.custom-node-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.custom-node-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Node type specific badge styles */
+.custom-node-type-badge.root {
+  background: var(--root-badge-bg);
+  color: var(--root-badge-text);
+  padding: 4px 12px;
+}
+
+.custom-node-type-badge.dataspace {
+  background: var(--dataspace-badge-bg);
+  color: var(--dataspace-badge-text);
+}
+
+.custom-node-type-badge.class {
+  background: var(--class-badge-bg);
+  color: var(--class-badge-text);
+}
+
+.custom-node-type-badge.businessConcept {
+  background: var(--concept-badge-bg);
+  color: var(--concept-badge-text);
+}
+
+.custom-node-type-badge.classDetails {
+  background: var(--classDetails-badge-bg);
+  color: var(--classDetails-badge-text);
+}
+
+.custom-node-type-badge.dataset {
+  background: var(--dataset-badge-bg);
+  color: var(--dataset-badge-text);
+}
+
+.custom-node-type-badge.attribute {
+  background: var(--attribute-badge-bg);
+  color: var(--attribute-badge-text);
+}
+
+.custom-node-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--graph-tree-text, var(--text-color));
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.custom-node-details-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--graph-tree-text, var(--text-color));
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 4px;
+}
+
+.custom-node-details-btn:hover {
+  background: rgba(0, 0, 0, 0.12);
+  transform: scale(1.02);
+}
+
+.graph-tree-dark .custom-node-details-btn {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.graph-tree-dark .custom-node-details-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* Leaf Node Hint */
+.custom-node-leaf-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--graph-tree-text, var(--text-color));
+  opacity: 0.6;
+  margin-top: 4px;
+  transition: opacity 0.2s ease;
+}
+
+.graph-tree-node:hover .custom-node-leaf-hint {
+  opacity: 1;
+}
+

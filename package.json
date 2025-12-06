@@ -3,12 +3,17 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "server": "tsx server/index.ts"
+    "server": "tsx server/index.ts",
+    "lib:build": "npm run build -w react-graph-tree",
+    "lib:dev": "npm run dev -w react-graph-tree"
   },
   "dependencies": {
     "@types/dagre": "^0.7.53",

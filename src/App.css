@@ -1,161 +1,90 @@
-.controls-overlay {
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  z-index: 10;
-  background: var(--bg-color);
-  padding: 16px;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  border: 1px solid var(--node-border);
-  min-width: 180px;
-}
-
-.control-center-title {
-  font-size: 13px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--accent-color);
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--node-border);
-  margin-bottom: 4px;
-}
-
-.control-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  font-size: 14px;
-  user-select: none;
-}
-
-.switch {
+/* App Container */
+.app-container {
   position: relative;
-  display: inline-block;
-  width: 40px;
-  height: 22px;
+  width: 100%;
+  height: 100vh;
 }
 
-.switch input { 
-  opacity: 0;
-  width: 0;
-  height: 0;
+/* Custom Graph Theme - Node Type Specific Styles */
+.custom-graph-theme .graph-tree-node[data-node-type="root"] {
+  border-color: var(--root-border);
+  background: linear-gradient(135deg, var(--root-bg-start) 0%, var(--root-bg-end) 100%);
 }
 
-.slider {
-  position: absolute;
+.custom-graph-theme .graph-tree-node[data-node-type="root"]:hover {
+  border-color: var(--root-border-hover);
+}
+
+.custom-graph-theme .graph-tree-node[data-node-type="dataspace"] {
+  border-color: var(--dataspace-border);
+  background: linear-gradient(135deg, var(--dataspace-bg-start) 0%, var(--dataspace-bg-end) 100%);
+}
+
+.custom-graph-theme .graph-tree-node[data-node-type="dataspace"]:hover {
+  border-color: var(--dataspace-border-hover);
+}
+
+.custom-graph-theme .graph-tree-node[data-node-type="class"] {
+  border-color: var(--class-border);
+  background: linear-gradient(135deg, var(--class-bg-start) 0%, var(--class-bg-end) 100%);
+}
+
+.custom-graph-theme .graph-tree-node[data-node-type="class"]:hover {
+  border-color: var(--class-border-hover);
+}
+
+.custom-graph-theme .graph-tree-node[data-node-type="businessConcept"] {
+  border-color: var(--concept-border);
+  background: linear-gradient(135deg, var(--concept-bg-start) 0%, var(--concept-bg-end) 100%);
+}
+
+.custom-graph-theme .graph-tree-node[data-node-type="businessConcept"]:hover {
+  border-color: var(--concept-border-hover);
+}
+
+.custom-graph-theme .graph-tree-node[data-node-type="classDetails"] {
+  border-color: var(--classDetails-border);
+  background: linear-gradient(135deg, var(--classDetails-bg-start) 0%, var(--classDetails-bg-end) 100%);
+}
+
+.custom-graph-theme .graph-tree-node[data-node-type="classDetails"]:hover {
+  border-color: var(--classDetails-border-hover);
+}
+
+.custom-graph-theme .graph-tree-node[data-node-type="dataset"] {
+  border-color: var(--dataset-border);
+  background: linear-gradient(135deg, var(--dataset-bg-start) 0%, var(--dataset-bg-end) 100%);
+}
+
+.custom-graph-theme .graph-tree-node[data-node-type="dataset"]:hover {
+  border-color: var(--dataset-border-hover);
+}
+
+.custom-graph-theme .graph-tree-node[data-node-type="attribute"] {
+  border-color: var(--attribute-border);
+  background: linear-gradient(135deg, var(--attribute-bg-start) 0%, var(--attribute-bg-end) 100%);
+}
+
+.custom-graph-theme .graph-tree-node[data-node-type="attribute"]:hover {
+  border-color: var(--attribute-border-hover);
+}
+
+/* Leaf node cursor hint */
+.custom-graph-theme .graph-tree-node[data-node-type="dataspace"],
+.custom-graph-theme .graph-tree-node[data-node-type="businessConcept"],
+.custom-graph-theme .graph-tree-node[data-node-type="dataset"],
+.custom-graph-theme .graph-tree-node[data-node-type="attribute"] {
   cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #ccc;
-  transition: .4s;
-  border-radius: 22px;
 }
 
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 16px;
-  width: 16px;
-  left: 3px;
-  bottom: 3px;
-  background-color: white;
-  transition: .4s;
-  border-radius: 50%;
-}
-
-input:checked + .slider {
-  background-color: var(--accent-color);
-}
-
-input:checked + .slider:before {
-  transform: translateX(18px);
-}
-
-.icon-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--text-color);
-  padding: 4px;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.icon-btn:hover {
-  background-color: var(--node-hover);
-}
-
-/* View Dropdown */
-.view-dropdown-container {
-  position: relative;
-}
-
-.view-dropdown-trigger {
-  justify-content: flex-start;
-}
-
-.view-dropdown-trigger .chevron {
-  margin-left: auto;
-  transition: transform 0.2s ease;
-}
-
-.view-dropdown-trigger .chevron.open {
-  transform: rotate(180deg);
-}
-
-.view-dropdown-menu {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  margin-top: 4px;
-  background: var(--bg-color);
-  border: 1px solid var(--node-border);
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  overflow: hidden;
-  z-index: 20;
-}
-
-.view-active-indicator {
-  width: 6px;
-  height: 6px;
-  background-color: var(--accent-color);
-  border-radius: 50%;
-  margin-left: auto;
-  margin-right: 4px;
-}
-
-.view-dropdown-item {
-  padding: 10px 12px;
-  font-size: 13px;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.view-dropdown-item:hover {
-  background-color: var(--node-hover);
-}
-
-.view-dropdown-item.selected {
-  color: var(--accent-color);
-  font-weight: 500;
-}
-
-.view-dropdown-item:not(:last-child) {
-  border-bottom: 1px solid var(--node-border);
+/* Dark mode overrides */
+.custom-graph-theme.graph-tree-dark {
+  --graph-tree-bg: var(--bg-color);
+  --graph-tree-text: var(--text-color);
+  --graph-tree-node-bg: var(--node-bg);
+  --graph-tree-node-border: var(--node-border);
+  --graph-tree-node-hover: var(--node-hover);
+  --graph-tree-line: var(--line-color);
+  --graph-tree-accent: var(--accent-color);
+  --graph-tree-active-path: var(--active-path-color);
 }

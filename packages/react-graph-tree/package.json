@@ -1,0 +1,68 @@
+{
+  "name": "react-graph-tree",
+  "version": "1.0.0",
+  "description": "A reusable React component for rendering interactive tree graphs with async node expansion",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./styles.css": "./dist/styles.css"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint src/",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "dependencies": {
+    "@xyflow/react": "^12.9.3",
+    "dagre": "^0.8.5"
+  },
+  "devDependencies": {
+    "@types/dagre": "^0.7.53",
+    "@types/react": "^19.2.5",
+    "@types/react-dom": "^19.2.3",
+    "tsup": "^8.4.0",
+    "typescript": "~5.9.3"
+  },
+  "keywords": [
+    "react",
+    "graph",
+    "tree",
+    "visualization",
+    "reactflow",
+    "dagre",
+    "async",
+    "expandable"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "bugs": {
+    "url": ""
+  },
+  "homepage": ""
+}
+

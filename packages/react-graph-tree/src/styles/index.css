@@ -1,0 +1,76 @@
+/* GraphTree Default Theme */
+.graph-tree-container {
+  --graph-tree-bg: #f8fafc;
+  --graph-tree-text: #1e293b;
+  --graph-tree-node-bg: #ffffff;
+  --graph-tree-node-border: #e2e8f0;
+  --graph-tree-node-border-hover: #94a3b8;
+  --graph-tree-node-hover: #f1f5f9;
+  --graph-tree-line: #94a3b8;
+  --graph-tree-accent: #6366f1;
+  --graph-tree-active-path: #22c55e;
+  --graph-tree-badge-bg: rgba(0, 0, 0, 0.08);
+  --graph-tree-badge-text: inherit;
+  
+  width: 100%;
+  height: 100%;
+  position: relative;
+  background-color: var(--graph-tree-bg);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Dark mode */
+.graph-tree-container.graph-tree-dark {
+  --graph-tree-bg: #0f172a;
+  --graph-tree-text: #f1f5f9;
+  --graph-tree-node-bg: #1e293b;
+  --graph-tree-node-border: #334155;
+  --graph-tree-node-border-hover: #475569;
+  --graph-tree-node-hover: #334155;
+  --graph-tree-line: #475569;
+  --graph-tree-accent: #818cf8;
+  --graph-tree-active-path: #4ade80;
+  --graph-tree-badge-bg: rgba(255, 255, 255, 0.1);
+  --graph-tree-badge-text: inherit;
+}
+
+/* Node position animation when animate is enabled */
+.graph-tree-container.graph-tree-animate-enabled.graph-tree-animating .react-flow__node {
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ReactFlow overrides */
+.graph-tree-container .react-flow__node {
+  border-radius: 12px;
+}
+
+.graph-tree-container .react-flow__edge-path {
+  stroke-linecap: round;
+}
+
+.graph-tree-container .react-flow__edge.graph-tree-active-path-edge .react-flow__edge-path {
+  stroke: var(--graph-tree-active-path);
+  filter: drop-shadow(0 0 4px var(--graph-tree-active-path));
+}
+
+.graph-tree-container .react-flow__controls {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  border: 1px solid var(--graph-tree-node-border);
+  background: var(--graph-tree-bg);
+}
+
+.graph-tree-container .react-flow__controls-button {
+  background: var(--graph-tree-bg);
+  border-color: var(--graph-tree-node-border);
+  fill: var(--graph-tree-text);
+}
+
+.graph-tree-container .react-flow__controls-button:hover {
+  background: var(--graph-tree-node-hover);
+}
+
+.graph-tree-container .react-flow__background {
+  background-color: var(--graph-tree-bg);
+}
+

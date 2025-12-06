@@ -1,0 +1,139 @@
+.graph-tree-controls-overlay {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 10;
+  background: var(--graph-tree-bg, #f8fafc);
+  padding: 16px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border: 1px solid var(--graph-tree-node-border, #e2e8f0);
+  min-width: 180px;
+}
+
+.graph-tree-control-center-title {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--graph-tree-accent, #6366f1);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--graph-tree-node-border, #e2e8f0);
+  margin-bottom: 4px;
+}
+
+.graph-tree-control-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  user-select: none;
+  color: var(--graph-tree-text, #1e293b);
+}
+
+.graph-tree-switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+}
+
+.graph-tree-switch input { 
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.graph-tree-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 22px;
+}
+
+.graph-tree-slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+.graph-tree-switch input:checked + .graph-tree-slider {
+  background-color: var(--graph-tree-accent, #6366f1);
+}
+
+.graph-tree-switch input:checked + .graph-tree-slider:before {
+  transform: translateX(18px);
+}
+
+/* View Dropdown */
+.graph-tree-view-dropdown-container {
+  position: relative;
+}
+
+.graph-tree-view-dropdown-trigger {
+  justify-content: flex-start;
+}
+
+.graph-tree-view-dropdown-trigger .graph-tree-chevron {
+  margin-left: auto;
+  transition: transform 0.2s ease;
+}
+
+.graph-tree-view-dropdown-trigger .graph-tree-chevron.open {
+  transform: rotate(180deg);
+}
+
+.graph-tree-view-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  background: var(--graph-tree-bg, #f8fafc);
+  border: 1px solid var(--graph-tree-node-border, #e2e8f0);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  z-index: 20;
+}
+
+.graph-tree-view-dropdown-item {
+  padding: 10px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--graph-tree-text, #1e293b);
+}
+
+.graph-tree-view-dropdown-item:hover {
+  background-color: var(--graph-tree-node-hover, #f1f5f9);
+}
+
+.graph-tree-view-dropdown-item.selected {
+  color: var(--graph-tree-accent, #6366f1);
+  font-weight: 500;
+}
+
+.graph-tree-view-dropdown-item:not(:last-child) {
+  border-bottom: 1px solid var(--graph-tree-node-border, #e2e8f0);
+}
+
