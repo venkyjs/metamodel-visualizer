@@ -1,6 +1,6 @@
 import React from 'react';
 import { Info, Database, Boxes, Lightbulb, FolderOpen, Table, Tag } from 'lucide-react';
-import type { NodeRendererProps } from 'react-graph-tree';
+import type { NodeRendererProps } from 'react-graph-chart';
 import './CustomNodeRenderer.css';
 
 type NodeType = 'root' | 'dataspace' | 'class' | 'businessConcept' | 'classDetails' | 'dataset' | 'attribute' | string;

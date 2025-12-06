@@ -12,8 +12,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "server": "tsx server/index.ts",
-    "lib:build": "npm run build -w react-graph-tree",
-    "lib:dev": "npm run dev -w react-graph-tree"
+    "lib:build": "npm run build -w react-graph-chart",
+    "lib:dev": "npm run dev -w react-graph-chart"
   },
   "dependencies": {
     "@types/dagre": "^0.7.53",

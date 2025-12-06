@@ -4,7 +4,7 @@ import {
   type GraphTreeHandle, 
   type GraphTreeNodeData, 
   type ChildNode,
-} from 'react-graph-tree';
+} from 'react-graph-chart';
 import { fetchRootNodes, fetchNodeChildren, request, type TreeNode } from './utils/api';
 import type { NodeData } from './types';
 import Drawer from './components/Drawer/Drawer';

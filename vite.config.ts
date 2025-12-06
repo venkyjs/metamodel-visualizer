@@ -8,7 +8,7 @@ export default defineConfig({
   resolve: {
     alias: {
       // Point to the source files for hot reloading during development
-      'react-graph-tree': path.resolve(__dirname, 'packages/react-graph-tree/src'),
+      'react-graph-chart': path.resolve(__dirname, 'packages/react-graph-chart/src'),
     },
   },
   server: {
@@ -27,6 +27,6 @@ export default defineConfig({
   optimizeDeps: {
     include: ['@xyflow/react', 'dagre'],
     // Don't pre-bundle our local package
-    exclude: ['react-graph-tree'],
+    exclude: ['react-graph-chart'],
   },
 })

@@ -9,7 +9,7 @@
     "skipLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "react-graph-tree": ["packages/react-graph-tree/src/index.ts"]
+      "react-graph-chart": ["packages/react-graph-chart/src/index.ts"]
     },
 
     /* Bundler mode */
@@ -28,5 +28,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src", "packages/react-graph-tree/src"]
+  "include": ["src", "packages/react-graph-chart/src"]
 }

@@ -21,7 +21,7 @@ export default defineConfig({
       'src/components/ControlCenter/ControlCenter.css',
     ];
     
-    let combinedCss = '/* react-graph-tree styles */\n\n';
+    let combinedCss = '/* react-graph-chart styles */\n\n';
     
     for (const file of cssFiles) {
       if (fs.existsSync(file)) {
